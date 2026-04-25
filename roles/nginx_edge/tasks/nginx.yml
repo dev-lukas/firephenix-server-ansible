@@ -5,6 +5,7 @@
       - nginx
       - openssl
     state: present
+  when: nginx_edge_manage_packages | bool
 
 - name: Create Nginx directories
   ansible.builtin.file:
@@ -29,6 +30,7 @@
       -subj "/CN={{ firephenix_site_domain }}"
   args:
     creates: /etc/nginx/ssl/bootstrap/fullchain.pem
+  when: nginx_edge_manage_bootstrap_certificate | bool
 
 - name: Point active SSL certificate to bootstrap certificate
   ansible.builtin.file:
@@ -41,6 +43,7 @@
       dest: /etc/nginx/ssl/active/fullchain.pem
     - src: /etc/nginx/ssl/bootstrap/privkey.pem
       dest: /etc/nginx/ssl/active/privkey.pem
+  when: nginx_edge_manage_bootstrap_certificate | bool
 
 - name: Deploy main nginx configuration
   ansible.builtin.template:

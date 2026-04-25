@@ -46,9 +46,16 @@
     chdir: "{{ firephenix_stack_dir }}"
   changed_when: false
 
+- name: Pull selected FirePhenix service images
+  ansible.builtin.command:
+    argv: "{{ ['docker', 'compose', 'pull'] + firephenix_stack_pull_services }}"
+    chdir: "{{ firephenix_stack_dir }}"
+  when: firephenix_stack_pull_services | length > 0
+  changed_when: false
+
 - name: Start selected FirePhenix services
-  ansible.builtin.shell:
-    cmd: "docker compose up -d {{ firephenix_stack_services | join(' ') }}"
+  ansible.builtin.command:
+    argv: "{{ ['docker', 'compose', 'up', '-d'] + firephenix_stack_services }}"
     chdir: "{{ firephenix_stack_dir }}"
   when:
     - firephenix_stack_start_services | bool

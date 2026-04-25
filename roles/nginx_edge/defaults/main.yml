@@ -1,6 +1,10 @@
 ---
 nginx_edge_ssl_mode: "self_signed"
 nginx_edge_obtain_certificates: false
+nginx_edge_manage_packages: true
+nginx_edge_manage_bootstrap_certificate: true
+nginx_edge_manage_certbot: true
+nginx_edge_manage_crowdsec: true
 nginx_edge_webroot: "/var/www/letsencrypt"
 nginx_edge_self_signed_days: 365
 

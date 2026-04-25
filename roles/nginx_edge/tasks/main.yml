@@ -1,5 +1,6 @@
 ---
 - ansible.builtin.import_tasks: nginx.yml
 - ansible.builtin.import_tasks: certbot.yml
+  when: nginx_edge_manage_certbot | bool
 - ansible.builtin.import_tasks: crowdsec.yml
-
+  when: nginx_edge_manage_crowdsec | bool

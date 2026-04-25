@@ -3,6 +3,7 @@ firephenix_project_name: "firephenix"
 firephenix_stack_dir: "/opt/firephenix"
 firephenix_stack_start_services: false
 firephenix_stack_services: []
+firephenix_stack_pull_services: []
 
 firephenix_backend_image: "{{ firephenix_registry_url }}/firephenix-backend:latest"
 firephenix_website_image: "{{ firephenix_registry_url }}/firephenix-website:latest"

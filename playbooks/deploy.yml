@@ -1,0 +1,21 @@
+---
+- name: Deploy FirePhenix stack and edge configuration without restoring data
+  hosts: firephenix
+  gather_facts: false
+  vars_files:
+    - ../inventory/group_vars/vault.yml
+  roles:
+    - role: firephenix_stack
+      vars:
+        firephenix_stack_pull_services:
+          - backend
+          - bot
+          - website
+          - portfolio
+        firephenix_stack_start_services: true
+    - role: nginx_edge
+      vars:
+        nginx_edge_manage_packages: false
+        nginx_edge_manage_bootstrap_certificate: false
+        nginx_edge_manage_certbot: false
+        nginx_edge_manage_crowdsec: false

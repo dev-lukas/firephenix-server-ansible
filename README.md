@@ -46,6 +46,7 @@ firephenix-server-ansible/
 │       └── vault.yml.example
 ├── playbooks/
 │   ├── creation.yml
+│   ├── deploy.yml
 │   └── maintenance.yml
 ├── requirements.txt
 ├── requirements.yml
@@ -145,6 +146,8 @@ Nginx enables request and connection limits by default through `nginx_edge_rate_
 
 Hardens and provisions the reinstalled Debian 13 server, installs Docker, configures Nginx + CrowdSec, restores backup data, and deploys the Docker stack.
 
+Do not use this playbook for routine live updates on an already deployed server. It includes restore roles and can reset MariaDB when restore variables are enabled.
+
 ```bash
 ansible-playbook playbooks/creation.yml --ask-vault-pass
 ```
@@ -164,6 +167,14 @@ ansible-playbook playbooks/creation.yml \
   --ask-vault-pass \
   -e nginx_edge_ssl_mode=letsencrypt \
   -e nginx_edge_obtain_certificates=true
+```
+
+### Deploy
+
+Updates the FirePhenix Docker stack and Nginx edge configuration without running host bootstrap, package installation, TLS bootstrap, Certbot, CrowdSec, or backup restore roles. It pulls only the application images (`backend`, `bot`, `website`, `portfolio`) before recreating the stack, leaving MariaDB, Valkey, and TeamSpeak images untouched. Use this for live configuration changes on an already deployed server.
+
+```bash
+ansible-playbook playbooks/deploy.yml --ask-vault-pass
 ```
 
 ### Maintenance
