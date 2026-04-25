@@ -38,16 +38,23 @@ server {
     access_log /var/log/nginx/firephenix.access.log main;
     error_log /var/log/nginx/firephenix.error.log warn;
 
+{% if nginx_edge_enable_hsts | bool %}
+    add_header Strict-Transport-Security "max-age={{ nginx_edge_hsts_max_age }}{% if nginx_edge_hsts_include_subdomains | bool %}; includeSubDomains{% endif %}{% if nginx_edge_hsts_preload | bool %}; preload{% endif %}" always;
+
+{% endif %}
     client_max_body_size 32m;
 
     location /api/ {
+        limit_req zone=firephenix_api burst={{ nginx_edge_rate_limit_api_burst }} nodelay;
+        limit_conn firephenix_per_ip {{ nginx_edge_connection_limit_per_ip }};
         include /etc/nginx/snippets/proxy-params.conf;
         proxy_pass http://firephenix_backend;
     }
 
     location / {
+        limit_req zone=firephenix_site burst={{ nginx_edge_rate_limit_site_burst }} nodelay;
+        limit_conn firephenix_per_ip {{ nginx_edge_connection_limit_per_ip }};
         include /etc/nginx/snippets/proxy-params.conf;
         proxy_pass http://firephenix_website;
     }
 }
-

@@ -1,0 +1,6 @@
+{% macro dotenv_quote(value) -%}
+'{{ (value | string) | replace("'", "\\'") }}'
+{%- endmacro %}
+MARIADB_ROOT_PASSWORD={{ dotenv_quote(firephenix_db_root_password) }}
+MARIADB_USER={{ dotenv_quote(firephenix_db_user) }}
+MARIADB_PASSWORD={{ dotenv_quote(firephenix_db_password) }}

@@ -1,7 +1,6 @@
 {% macro dotenv_quote(value) -%}
 '{{ (value | string) | replace("'", "\\'") }}'
 {%- endmacro %}
-DB_ROOT_PASSWORD={{ dotenv_quote(firephenix_db_root_password) }}
 DB_USER={{ dotenv_quote(firephenix_db_user) }}
 DB_PASSWORD={{ dotenv_quote(firephenix_db_password) }}
 SECRET_KEY={{ dotenv_quote(firephenix_secret_key) }}

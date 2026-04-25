@@ -4,3 +4,13 @@ nginx_edge_obtain_certificates: false
 nginx_edge_webroot: "/var/www/letsencrypt"
 nginx_edge_self_signed_days: 365
 
+nginx_edge_enable_hsts: "{{ nginx_edge_ssl_mode == 'letsencrypt' }}"
+nginx_edge_hsts_max_age: 31536000
+nginx_edge_hsts_include_subdomains: false
+nginx_edge_hsts_preload: false
+
+nginx_edge_rate_limit_site: "30r/s"
+nginx_edge_rate_limit_site_burst: 60
+nginx_edge_rate_limit_api: "10r/s"
+nginx_edge_rate_limit_api_burst: 30
+nginx_edge_connection_limit_per_ip: 20

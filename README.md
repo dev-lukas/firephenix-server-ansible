@@ -125,6 +125,20 @@ vault_firephenix_vpnapi_api_key: ""
 
 `vault_firephenix_ts3_privilige_key` intentionally matches the current backend `.env.example` spelling.
 
+## Security Defaults
+
+The Docker stack writes separate service environment files under `firephenix_stack_dir`:
+
+- `.env.database` for MariaDB root and app database credentials
+- `.env.backend` for backend-only app credentials and backend API keys
+- `.env.bot` for bot, Discord, and TeamSpeak credentials
+
+The legacy shared `.env` file is removed during deployment so app containers do not keep receiving the database root password or unrelated service tokens.
+
+Stateless containers run with `no-new-privileges`, tmpfs scratch space, process limits, and dropped Linux capabilities where practical. The backend and web containers also use read-only root filesystems. The backend defaults to user `1000:1000`; override `firephenix_backend_container_user` if your image requires a different runtime UID. The bot does not force a non-root user yet because the current image writes its PID file under `/app/app`.
+
+Nginx enables request and connection limits by default through `nginx_edge_rate_limit_*` and `nginx_edge_connection_limit_per_ip`. HSTS is enabled automatically when `nginx_edge_ssl_mode` is `letsencrypt`; leave `nginx_edge_hsts_include_subdomains` and `nginx_edge_hsts_preload` disabled until every subdomain is permanently HTTPS-ready.
+
 ## Playbooks
 
 ### Creation

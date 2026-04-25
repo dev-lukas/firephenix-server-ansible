@@ -30,3 +30,7 @@ firephenix_docker_internal_subnet: "172.30.0.0/24"
 firephenix_backend_bind_port: 5000
 firephenix_website_bind_port: 18080
 firephenix_portfolio_bind_port: 8081
+
+firephenix_backend_container_user: "1000:1000"
+firephenix_bot_container_user: ""
+firephenix_container_pids_limit: 256

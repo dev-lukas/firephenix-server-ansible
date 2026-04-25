@@ -1,12 +1,47 @@
+{% macro stateless_security() %}
+security_opt:
+  - no-new-privileges:true
+cap_drop:
+  - ALL
+read_only: true
+init: true
+tmpfs:
+  - /tmp:rw,noexec,nosuid,size=64m
+pids_limit: {{ firephenix_container_pids_limit }}
+{% endmacro %}
+{% macro process_security() %}
+security_opt:
+  - no-new-privileges:true
+cap_drop:
+  - ALL
+init: true
+tmpfs:
+  - /tmp:rw,noexec,nosuid,size=64m
+pids_limit: {{ firephenix_container_pids_limit }}
+{% endmacro %}
+{% macro web_security() %}
+security_opt:
+  - no-new-privileges:true
+read_only: true
+init: true
+tmpfs:
+  - /tmp:rw,noexec,nosuid,size=64m
+  - /var/cache/nginx:rw,noexec,nosuid,size=32m
+  - /var/log/nginx:rw,noexec,nosuid,size=16m
+  - /run:rw,noexec,nosuid,size=8m
+  - /var/run:rw,noexec,nosuid,size=8m
+pids_limit: {{ firephenix_container_pids_limit }}
+{% endmacro %}
 services:
   mariadb:
     image: mariadb:11
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    env_file:
+      - .env.database
     environment:
-      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       MARIADB_DATABASE: {{ firephenix_db_name }}
-      MARIADB_USER: ${DB_USER}
-      MARIADB_PASSWORD: ${DB_PASSWORD}
     volumes:
       - mariadb_data:/var/lib/mysql
     networks:
@@ -20,6 +55,10 @@ services:
   valkey:
     image: valkey/valkey:8-alpine
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     volumes:
       - valkey_data:/data
     networks:
@@ -33,6 +72,8 @@ services:
   teamspeak:
     image: teamspeak:3.13
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     environment:
       TS3SERVER_LICENSE: accept
       TS3SERVER_QUERY_PROTOCOLS: raw
@@ -54,14 +95,18 @@ services:
   backend:
     image: {{ firephenix_backend_image }}
     restart: unless-stopped
+{% if firephenix_backend_container_user | length > 0 %}
+    user: "{{ firephenix_backend_container_user }}"
+{% endif %}
     env_file:
-      - .env
+      - .env.backend
     environment:
       DB_HOST: mariadb
       DB_PORT: "3306"
       VALKEY_HOST: valkey
       VALKEY_PORT: "6379"
       SITE_URL: {{ firephenix_site_url }}
+      PYTHONDONTWRITEBYTECODE: "1"
     depends_on:
       mariadb:
         condition: service_healthy
@@ -72,21 +117,24 @@ services:
       - internal
     ports:
       - "127.0.0.1:{{ firephenix_backend_bind_port }}:5000"
+{{ stateless_security() | indent(4, true) }}
 
   bot:
     image: {{ firephenix_backend_image }}
     restart: unless-stopped
+{% if firephenix_bot_container_user | length > 0 %}
+    user: "{{ firephenix_bot_container_user }}"
+{% endif %}
     command: ["python", "bot_runner.py"]
     env_file:
-      - .env
+      - .env.bot
     environment:
       DB_HOST: mariadb
       DB_PORT: "3306"
       VALKEY_HOST: valkey
       VALKEY_PORT: "6379"
-      TS3_HOST: ${TS3_HOST}
-      TS3_PORT: ${TS3_PORT}
       SITE_URL: {{ firephenix_site_url }}
+      PYTHONDONTWRITEBYTECODE: "1"
     depends_on:
       mariadb:
         condition: service_healthy
@@ -97,6 +145,7 @@ services:
     networks:
       - edge
       - internal
+{{ process_security() | indent(4, true) }}
 
   website:
     image: {{ firephenix_website_image }}
@@ -105,6 +154,7 @@ services:
       - edge
     ports:
       - "127.0.0.1:{{ firephenix_website_bind_port }}:80"
+{{ web_security() | indent(4, true) }}
 
   portfolio:
     image: {{ firephenix_portfolio_image }}
@@ -113,6 +163,7 @@ services:
       - edge
     ports:
       - "127.0.0.1:{{ firephenix_portfolio_bind_port }}:80"
+{{ web_security() | indent(4, true) }}
 
 networks:
   edge:

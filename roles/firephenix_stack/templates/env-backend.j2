@@ -1,0 +1,8 @@
+{% macro dotenv_quote(value) -%}
+'{{ (value | string) | replace("'", "\\'") }}'
+{%- endmacro %}
+DB_USER={{ dotenv_quote(firephenix_db_user) }}
+DB_PASSWORD={{ dotenv_quote(firephenix_db_password) }}
+SECRET_KEY={{ dotenv_quote(firephenix_secret_key) }}
+OPENROUTER_API_KEY={{ dotenv_quote(firephenix_openrouter_api_key) }}
+VPNAPI_API_KEY={{ dotenv_quote(firephenix_vpnapi_api_key) }}

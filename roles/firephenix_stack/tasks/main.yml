@@ -20,11 +20,24 @@
     dest: "{{ firephenix_stack_dir }}/docker-compose.yml"
     mode: "0644"
 
-- name: Deploy FirePhenix environment file
+- name: Deploy FirePhenix service environment files
   ansible.builtin.template:
-    src: env.j2
-    dest: "{{ firephenix_stack_dir }}/.env"
+    src: "{{ item.src }}"
+    dest: "{{ firephenix_stack_dir }}/{{ item.dest }}"
     mode: "0600"
+  loop:
+    - src: env-database.j2
+      dest: .env.database
+    - src: env-backend.j2
+      dest: .env.backend
+    - src: env-bot.j2
+      dest: .env.bot
+  no_log: true
+
+- name: Remove legacy shared environment file
+  ansible.builtin.file:
+    path: "{{ firephenix_stack_dir }}/.env"
+    state: absent
   no_log: true
 
 - name: Validate docker-compose configuration

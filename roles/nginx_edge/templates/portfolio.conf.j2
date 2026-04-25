@@ -33,9 +33,14 @@ server {
     access_log /var/log/nginx/portfolio.access.log main;
     error_log /var/log/nginx/portfolio.error.log warn;
 
+{% if nginx_edge_enable_hsts | bool %}
+    add_header Strict-Transport-Security "max-age={{ nginx_edge_hsts_max_age }}{% if nginx_edge_hsts_include_subdomains | bool %}; includeSubDomains{% endif %}{% if nginx_edge_hsts_preload | bool %}; preload{% endif %}" always;
+
+{% endif %}
     location / {
+        limit_req zone=firephenix_site burst={{ nginx_edge_rate_limit_site_burst }} nodelay;
+        limit_conn firephenix_per_ip {{ nginx_edge_connection_limit_per_ip }};
         include /etc/nginx/snippets/proxy-params.conf;
         proxy_pass http://firephenix_portfolio;
     }
 }
-
