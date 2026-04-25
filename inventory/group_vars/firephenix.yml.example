@@ -1,0 +1,37 @@
+---
+base_server_ufw_allowed_tcp_ports:
+  - 22
+  - 80
+  - 443
+  - 30033
+
+base_server_ufw_allowed_udp_ports:
+  - 9987
+
+firephenix_backend_image: "{{ firephenix_registry_url }}/firephenix-backend:latest"
+firephenix_website_image: "{{ firephenix_registry_url }}/firephenix-website:latest"
+firephenix_portfolio_image: "{{ firephenix_registry_url }}/portfolio:latest"
+
+firephenix_backend_bind_port: 5000
+firephenix_website_bind_port: 18080
+firephenix_portfolio_bind_port: 8081
+
+firephenix_db_name: "firephenix"
+firephenix_db_user: "firephenix"
+
+firephenix_creation_start_stack: true
+firephenix_local_backup_archive: ""
+firephenix_remote_backup_dir: "/opt/firephenix/restore"
+firephenix_restore_database: true
+firephenix_restore_database_reset: true
+firephenix_restore_teamspeak: true
+
+firephenix_ts3_host: "teamspeak"
+firephenix_ts3_port: 10011
+firephenix_teamspeak_voice_port: 9987
+firephenix_teamspeak_file_port: 30033
+firephenix_teamspeak_data_dir: "{{ firephenix_stack_dir }}/data/teamspeak"
+firephenix_docker_internal_subnet: "172.30.0.0/24"
+
+nginx_edge_ssl_mode: "letsencrypt"
+nginx_edge_obtain_certificates: true

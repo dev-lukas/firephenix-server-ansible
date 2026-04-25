@@ -1,0 +1,129 @@
+services:
+  mariadb:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: {{ firephenix_db_name }}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  valkey:
+    image: valkey/valkey:8-alpine
+    restart: unless-stopped
+    volumes:
+      - valkey_data:/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  teamspeak:
+    image: teamspeak:3.13
+    restart: unless-stopped
+    environment:
+      TS3SERVER_LICENSE: accept
+      TS3SERVER_QUERY_PROTOCOLS: raw
+    ports:
+      - "{{ firephenix_teamspeak_voice_port }}:9987/udp"
+      - "{{ firephenix_teamspeak_file_port }}:30033"
+      - "127.0.0.1:{{ firephenix_ts3_port }}:10011"
+    volumes:
+      - "{{ firephenix_teamspeak_data_dir }}:/var/ts3server"
+    networks:
+      - edge
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "echo quit | nc localhost 10011 | grep -q TS3"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: {{ firephenix_backend_image }}
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DB_HOST: mariadb
+      DB_PORT: "3306"
+      VALKEY_HOST: valkey
+      VALKEY_PORT: "6379"
+      SITE_URL: {{ firephenix_site_url }}
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    networks:
+      - edge
+      - internal
+    ports:
+      - "127.0.0.1:{{ firephenix_backend_bind_port }}:5000"
+
+  bot:
+    image: {{ firephenix_backend_image }}
+    restart: unless-stopped
+    command: ["python", "bot_runner.py"]
+    env_file:
+      - .env
+    environment:
+      DB_HOST: mariadb
+      DB_PORT: "3306"
+      VALKEY_HOST: valkey
+      VALKEY_PORT: "6379"
+      TS3_HOST: ${TS3_HOST}
+      TS3_PORT: ${TS3_PORT}
+      SITE_URL: {{ firephenix_site_url }}
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+      teamspeak:
+        condition: service_healthy
+    networks:
+      - edge
+      - internal
+
+  website:
+    image: {{ firephenix_website_image }}
+    restart: unless-stopped
+    networks:
+      - edge
+    ports:
+      - "127.0.0.1:{{ firephenix_website_bind_port }}:80"
+
+  portfolio:
+    image: {{ firephenix_portfolio_image }}
+    restart: unless-stopped
+    networks:
+      - edge
+    ports:
+      - "127.0.0.1:{{ firephenix_portfolio_bind_port }}:80"
+
+networks:
+  edge:
+  internal:
+    internal: true
+    ipam:
+      config:
+        - subnet: {{ firephenix_docker_internal_subnet }}
+
+volumes:
+  mariadb_data:
+    name: "{{ firephenix_project_name }}_mariadb_data"
+  valkey_data:
+    name: "{{ firephenix_project_name }}_valkey_data"

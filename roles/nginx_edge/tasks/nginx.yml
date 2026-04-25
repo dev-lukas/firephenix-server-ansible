@@ -1,0 +1,121 @@
+---
+- name: Install Nginx packages
+  ansible.builtin.apt:
+    name:
+      - nginx
+      - openssl
+    state: present
+
+- name: Create Nginx directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - /etc/nginx/snippets
+    - /etc/nginx/sites-available
+    - /etc/nginx/sites-enabled
+    - /etc/nginx/ssl/bootstrap
+    - /etc/nginx/ssl/active
+    - "{{ nginx_edge_webroot }}/.well-known/acme-challenge"
+
+- name: Create bootstrap self-signed certificate
+  ansible.builtin.command:
+    cmd: >
+      openssl req -x509 -nodes -days {{ nginx_edge_self_signed_days }}
+      -newkey rsa:2048
+      -keyout /etc/nginx/ssl/bootstrap/privkey.pem
+      -out /etc/nginx/ssl/bootstrap/fullchain.pem
+      -subj "/CN={{ firephenix_site_domain }}"
+  args:
+    creates: /etc/nginx/ssl/bootstrap/fullchain.pem
+
+- name: Point active SSL certificate to bootstrap certificate
+  ansible.builtin.file:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    state: link
+    force: true
+  loop:
+    - src: /etc/nginx/ssl/bootstrap/fullchain.pem
+      dest: /etc/nginx/ssl/active/fullchain.pem
+    - src: /etc/nginx/ssl/bootstrap/privkey.pem
+      dest: /etc/nginx/ssl/active/privkey.pem
+
+- name: Deploy main nginx configuration
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    mode: "0644"
+  notify: Restart nginx
+
+- name: Deploy SSL parameters snippet
+  ansible.builtin.template:
+    src: ssl-params.conf.j2
+    dest: /etc/nginx/snippets/ssl-params.conf
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Deploy proxy parameter snippet
+  ansible.builtin.copy:
+    dest: /etc/nginx/snippets/proxy-params.conf
+    mode: "0644"
+    content: |
+      proxy_http_version 1.1;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_set_header X-Forwarded-Host $host;
+      proxy_set_header X-Forwarded-Port $server_port;
+      proxy_connect_timeout 60s;
+      proxy_send_timeout 60s;
+      proxy_read_timeout 60s;
+
+- name: Deploy FirePhenix vhost
+  ansible.builtin.template:
+    src: firephenix.conf.j2
+    dest: /etc/nginx/sites-available/firephenix.conf
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Deploy portfolio vhost
+  ansible.builtin.template:
+    src: portfolio.conf.j2
+    dest: /etc/nginx/sites-available/portfolio.conf
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Deploy default catch-all vhost
+  ansible.builtin.template:
+    src: default.conf.j2
+    dest: /etc/nginx/sites-available/default
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Enable Nginx sites
+  ansible.builtin.file:
+    src: "/etc/nginx/sites-available/{{ item }}"
+    dest: "/etc/nginx/sites-enabled/{{ item }}"
+    state: link
+    force: true
+  loop:
+    - firephenix.conf
+    - portfolio.conf
+    - default
+
+- name: Remove packaged default site link
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default.conf
+    state: absent
+
+- name: Validate nginx configuration
+  ansible.builtin.command:
+    cmd: nginx -t
+  changed_when: false
+
+- name: Ensure nginx is enabled and running
+  ansible.builtin.systemd:
+    name: nginx
+    state: started
+    enabled: true

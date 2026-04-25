@@ -1,0 +1,32 @@
+---
+firephenix_project_name: "firephenix"
+firephenix_stack_dir: "/opt/firephenix"
+firephenix_stack_start_services: false
+firephenix_stack_services: []
+
+firephenix_backend_image: "{{ firephenix_registry_url }}/firephenix-backend:latest"
+firephenix_website_image: "{{ firephenix_registry_url }}/firephenix-website:latest"
+firephenix_portfolio_image: "{{ firephenix_registry_url }}/portfolio:latest"
+
+firephenix_db_name: "firephenix"
+firephenix_db_user: "firephenix"
+firephenix_db_root_password: "{{ vault_firephenix_db_root_password | default('change-me-root-password') }}"
+firephenix_db_password: "{{ vault_firephenix_db_password | default('change-me-db-password') }}"
+firephenix_secret_key: "{{ vault_firephenix_secret_key | default('change-me-secret-key') }}"
+firephenix_discord_token: "{{ vault_firephenix_discord_token | default('') }}"
+firephenix_ts3_password: "{{ vault_firephenix_ts3_password | default('') }}"
+firephenix_ts3_api_key: "{{ vault_firephenix_ts3_api_key | default('') }}"
+firephenix_ts3_privilige_key: "{{ vault_firephenix_ts3_privilige_key | default('') }}"
+firephenix_openrouter_api_key: "{{ vault_firephenix_openrouter_api_key | default('') }}"
+firephenix_vpnapi_api_key: "{{ vault_firephenix_vpnapi_api_key | default('') }}"
+
+firephenix_ts3_host: "teamspeak"
+firephenix_ts3_port: 10011
+firephenix_teamspeak_voice_port: 9987
+firephenix_teamspeak_file_port: 30033
+firephenix_teamspeak_data_dir: "{{ firephenix_stack_dir }}/data/teamspeak"
+firephenix_docker_internal_subnet: "172.30.0.0/24"
+
+firephenix_backend_bind_port: 5000
+firephenix_website_bind_port: 18080
+firephenix_portfolio_bind_port: 8081

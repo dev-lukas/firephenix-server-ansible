@@ -1,0 +1,46 @@
+---
+- name: Check if TeamSpeak backup archive exists
+  ansible.builtin.stat:
+    path: "{{ firephenix_teamspeak_backup_tar }}"
+  register: firephenix_teamspeak_backup
+  when: firephenix_restore_teamspeak | bool
+
+- name: Ensure TeamSpeak data directory exists
+  ansible.builtin.file:
+    path: "{{ firephenix_teamspeak_data_dir }}"
+    state: directory
+    mode: "0755"
+  when:
+    - firephenix_restore_teamspeak | bool
+    - firephenix_teamspeak_backup.stat.exists | default(false)
+
+- name: Restore TeamSpeak files into Docker bind mount
+  ansible.builtin.unarchive:
+    src: "{{ firephenix_teamspeak_backup_tar }}"
+    dest: "{{ firephenix_teamspeak_data_dir }}"
+    remote_src: true
+    extra_opts:
+      - --no-same-owner
+  when:
+    - firephenix_restore_teamspeak | bool
+    - firephenix_teamspeak_backup.stat.exists | default(false)
+
+- name: Ensure TeamSpeak query allowlist exists
+  ansible.builtin.file:
+    path: "{{ firephenix_teamspeak_data_dir }}/query_ip_allowlist.txt"
+    state: touch
+    mode: "0664"
+  when:
+    - firephenix_restore_teamspeak | bool
+    - firephenix_teamspeak_backup.stat.exists | default(false)
+
+- name: Allow Docker internal network for TeamSpeak ServerQuery
+  ansible.builtin.lineinfile:
+    path: "{{ firephenix_teamspeak_data_dir }}/query_ip_allowlist.txt"
+    line: "{{ item }}"
+    create: true
+    mode: "0664"
+  loop: "{{ firephenix_teamspeak_query_allowlist }}"
+  when:
+    - firephenix_restore_teamspeak | bool
+    - firephenix_teamspeak_backup.stat.exists | default(false)

@@ -1,0 +1,9 @@
+---
+firephenix_remote_backup_dir: "/opt/firephenix/restore"
+firephenix_restore_teamspeak: true
+firephenix_teamspeak_data_dir: "{{ firephenix_stack_dir }}/data/teamspeak"
+firephenix_teamspeak_backup_tar: "{{ firephenix_remote_backup_dir }}/firephenix-backup/teamspeak/teamspeak-server.tar.gz"
+firephenix_teamspeak_query_allowlist:
+  - "127.0.0.1/32"
+  - "::1/128"
+  - "{{ firephenix_docker_internal_subnet }}"

@@ -1,0 +1,8 @@
+---
+firephenix_project_name: "firephenix"
+firephenix_local_backup_archive: ""
+firephenix_remote_backup_dir: "/opt/firephenix/restore"
+firephenix_restore_database: true
+firephenix_restore_database_reset: true
+firephenix_restore_teamspeak: true
+firephenix_creation_start_stack: true

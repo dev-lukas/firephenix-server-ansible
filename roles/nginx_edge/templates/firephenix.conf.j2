@@ -1,0 +1,53 @@
+upstream firephenix_website {
+    server 127.0.0.1:{{ firephenix_website_bind_port }};
+    keepalive 32;
+}
+
+upstream firephenix_backend {
+    server 127.0.0.1:{{ firephenix_backend_bind_port }};
+    keepalive 32;
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name {{ firephenix_site_domain }};
+
+    access_log /var/log/nginx/firephenix.access.log main;
+    error_log /var/log/nginx/firephenix.error.log warn;
+
+    location /.well-known/acme-challenge/ {
+        root {{ nginx_edge_webroot }};
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name {{ firephenix_site_domain }};
+
+    ssl_certificate /etc/nginx/ssl/active/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/active/privkey.pem;
+    include /etc/nginx/snippets/ssl-params.conf;
+
+    access_log /var/log/nginx/firephenix.access.log main;
+    error_log /var/log/nginx/firephenix.error.log warn;
+
+    client_max_body_size 32m;
+
+    location /api/ {
+        include /etc/nginx/snippets/proxy-params.conf;
+        proxy_pass http://firephenix_backend;
+    }
+
+    location / {
+        include /etc/nginx/snippets/proxy-params.conf;
+        proxy_pass http://firephenix_website;
+    }
+}
+

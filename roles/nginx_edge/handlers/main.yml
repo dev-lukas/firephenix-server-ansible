@@ -1,0 +1,21 @@
+---
+- name: Restart nginx
+  ansible.builtin.systemd:
+    name: nginx
+    state: restarted
+
+- name: Reload nginx
+  ansible.builtin.systemd:
+    name: nginx
+    state: reloaded
+
+- name: Restart crowdsec
+  ansible.builtin.systemd:
+    name: crowdsec
+    state: restarted
+
+- name: Restart crowdsec firewall bouncer
+  ansible.builtin.systemd:
+    name: crowdsec-firewall-bouncer
+    state: restarted
+

@@ -1,0 +1,9 @@
+---
+docker_host_stack_dir: "{{ firephenix_stack_dir }}"
+docker_host_backup_dir: "{{ firephenix_backup_dir }}"
+docker_host_admin_user: "{{ base_server_admin_user }}"
+docker_host_registry_url: "{{ firephenix_registry_url }}"
+docker_host_registry_username: "{{ firephenix_registry_username }}"
+docker_host_registry_password: "{{ vault_firephenix_registry_password | default('') }}"
+docker_host_registry_public_ip_override: "{{ firephenix_registry_public_ip_override | default('') }}"
+docker_host_registry_allow_private_dns: "{{ firephenix_registry_allow_private_dns | default(false) }}"

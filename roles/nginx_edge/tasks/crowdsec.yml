@@ -1,0 +1,72 @@
+---
+- name: Install CrowdSec repository
+  ansible.builtin.shell:
+    cmd: "curl -s https://install.crowdsec.net | sh"
+  args:
+    creates: /etc/apt/sources.list.d/crowdsec_crowdsec.list
+
+- name: Update apt cache after CrowdSec repo installation
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Install CrowdSec packages
+  ansible.builtin.apt:
+    name:
+      - crowdsec
+      - crowdsec-firewall-bouncer-iptables
+    state: present
+
+- name: Install CrowdSec collections
+  ansible.builtin.command:
+    cmd: "cscli collections install {{ item }}"
+  loop:
+    - "crowdsecurity/nginx"
+    - "crowdsecurity/linux"
+    - "crowdsecurity/sshd"
+    - "crowdsecurity/http-cve"
+  changed_when: false
+  failed_when: false
+
+- name: Configure CrowdSec Nginx acquisition
+  ansible.builtin.copy:
+    dest: /etc/crowdsec/acquis.d/nginx.yaml
+    mode: "0644"
+    content: |
+      filenames:
+        - /var/log/nginx/*.access.log
+        - /var/log/nginx/*.error.log
+        - /var/log/nginx/access.log
+        - /var/log/nginx/error.log
+      labels:
+        type: nginx
+      ---
+      source: journalctl
+      journalctl_filter:
+        - "_SYSTEMD_UNIT=nginx.service"
+      labels:
+        type: syslog
+  notify: Restart crowdsec
+
+- name: Configure CrowdSec SSH acquisition
+  ansible.builtin.copy:
+    dest: /etc/crowdsec/acquis.d/sshd.yaml
+    mode: "0644"
+    content: |
+      filenames:
+        - /var/log/auth.log
+      labels:
+        type: syslog
+  notify: Restart crowdsec
+
+- name: Ensure CrowdSec service is enabled
+  ansible.builtin.systemd:
+    name: crowdsec
+    state: started
+    enabled: true
+
+- name: Ensure CrowdSec firewall bouncer is enabled
+  ansible.builtin.systemd:
+    name: crowdsec-firewall-bouncer
+    state: started
+    enabled: true
+

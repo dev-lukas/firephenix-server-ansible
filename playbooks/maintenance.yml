@@ -1,0 +1,67 @@
+---
+- name: Perform routine maintenance on the new FirePhenix server
+  hosts: firephenix
+  gather_facts: false
+  vars_files:
+    - ../inventory/group_vars/vault.yml
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Upgrade packages
+      ansible.builtin.apt:
+        upgrade: safe
+
+    - name: Remove unused packages
+      ansible.builtin.apt:
+        autoremove: true
+        autoclean: true
+
+    - name: Pull and recreate FirePhenix Docker stack
+      ansible.builtin.command:
+        cmd: docker compose pull
+        chdir: "{{ firephenix_stack_dir }}"
+      changed_when: false
+
+    - name: Ensure FirePhenix Docker stack is running
+      ansible.builtin.command:
+        cmd: docker compose up -d
+        chdir: "{{ firephenix_stack_dir }}"
+      changed_when: false
+
+    - name: Prune unused Docker images
+      ansible.builtin.command:
+        cmd: docker image prune -f
+      changed_when: false
+
+    - name: Validate nginx configuration
+      ansible.builtin.command:
+        cmd: nginx -t
+      changed_when: false
+
+    - name: Reload nginx
+      ansible.builtin.systemd:
+        name: nginx
+        state: reloaded
+
+    - name: Refresh CrowdSec hub
+      ansible.builtin.command:
+        cmd: cscli hub update
+      changed_when: false
+      failed_when: false
+
+    - name: Upgrade CrowdSec hub content
+      ansible.builtin.command:
+        cmd: cscli hub upgrade
+      changed_when: false
+      failed_when: false
+
+    - name: Restart CrowdSec services
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: restarted
+      loop:
+        - crowdsec
+        - crowdsec-firewall-bouncer

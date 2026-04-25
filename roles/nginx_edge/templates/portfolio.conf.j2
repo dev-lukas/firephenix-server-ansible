@@ -1,0 +1,41 @@
+upstream firephenix_portfolio {
+    server 127.0.0.1:{{ firephenix_portfolio_bind_port }};
+    keepalive 32;
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name {{ firephenix_portfolio_domain }};
+
+    access_log /var/log/nginx/portfolio.access.log main;
+    error_log /var/log/nginx/portfolio.error.log warn;
+
+    location /.well-known/acme-challenge/ {
+        root {{ nginx_edge_webroot }};
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name {{ firephenix_portfolio_domain }};
+
+    ssl_certificate /etc/nginx/ssl/active/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/active/privkey.pem;
+    include /etc/nginx/snippets/ssl-params.conf;
+
+    access_log /var/log/nginx/portfolio.access.log main;
+    error_log /var/log/nginx/portfolio.error.log warn;
+
+    location / {
+        include /etc/nginx/snippets/proxy-params.conf;
+        proxy_pass http://firephenix_portfolio;
+    }
+}
+

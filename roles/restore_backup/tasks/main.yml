@@ -1,0 +1,144 @@
+---
+- name: Ensure remote restore directory exists
+  ansible.builtin.file:
+    path: "{{ firephenix_remote_backup_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Copy backup archive to server
+  ansible.builtin.copy:
+    src: "{{ firephenix_local_backup_archive }}"
+    dest: "{{ firephenix_remote_backup_dir }}/backup.tar.gz"
+    mode: "0600"
+  when: firephenix_local_backup_archive | length > 0
+
+- name: Extract backup archive
+  ansible.builtin.unarchive:
+    src: "{{ firephenix_remote_backup_dir }}/backup.tar.gz"
+    dest: "{{ firephenix_remote_backup_dir }}"
+    remote_src: true
+    extra_opts:
+      - --no-same-owner
+  when: firephenix_local_backup_archive | length > 0
+
+- name: Restore TeamSpeak bind-mount data from backup
+  ansible.builtin.include_role:
+    name: teamspeak_restore
+  when:
+    - firephenix_local_backup_archive | length > 0
+    - firephenix_restore_teamspeak | bool
+
+- name: Check if MariaDB backup exists
+  ansible.builtin.stat:
+    path: "{{ firephenix_remote_backup_dir }}/firephenix-backup/mariadb/{{ firephenix_db_name }}.sql"
+  register: firephenix_mariadb_backup
+  when:
+    - firephenix_local_backup_archive | length > 0
+    - firephenix_restore_database | bool
+
+- name: Stop MariaDB before destructive restore reset
+  ansible.builtin.command:
+    cmd: docker compose stop mariadb
+    chdir: "{{ firephenix_stack_dir }}"
+  when:
+    - firephenix_creation_start_stack | bool
+    - firephenix_restore_database_reset | bool
+    - firephenix_mariadb_backup.stat.exists | default(false)
+  failed_when: false
+  changed_when: false
+
+- name: Remove MariaDB container before destructive restore reset
+  ansible.builtin.command:
+    cmd: docker compose rm -sf mariadb
+    chdir: "{{ firephenix_stack_dir }}"
+  when:
+    - firephenix_creation_start_stack | bool
+    - firephenix_restore_database_reset | bool
+    - firephenix_mariadb_backup.stat.exists | default(false)
+  failed_when: false
+  changed_when: false
+
+- name: Remove MariaDB data volume before restore
+  ansible.builtin.command:
+    cmd: "docker volume rm {{ firephenix_project_name }}_mariadb_data"
+  when:
+    - firephenix_creation_start_stack | bool
+    - firephenix_restore_database_reset | bool
+    - firephenix_mariadb_backup.stat.exists | default(false)
+  failed_when: false
+  changed_when: false
+
+- name: Start MariaDB and Valkey services for restore
+  ansible.builtin.command:
+    cmd: docker compose up -d mariadb valkey
+    chdir: "{{ firephenix_stack_dir }}"
+  when:
+    - firephenix_creation_start_stack | bool
+    - firephenix_mariadb_backup.stat.exists | default(false)
+  changed_when: false
+
+- name: Wait for MariaDB to become healthy
+  ansible.builtin.command:
+    cmd: docker compose exec -T mariadb healthcheck.sh --connect --innodb_initialized
+    chdir: "{{ firephenix_stack_dir }}"
+  register: firephenix_mariadb_health
+  retries: 20
+  delay: 5
+  until: firephenix_mariadb_health.rc == 0
+  when:
+    - firephenix_creation_start_stack | bool
+    - firephenix_mariadb_backup.stat.exists | default(false)
+  changed_when: false
+
+- name: Reset target database before restore
+  ansible.builtin.command:
+    argv:
+      - docker
+      - compose
+      - exec
+      - -T
+      - -e
+      - MYSQL_PWD
+      - mariadb
+      - mariadb
+      - -u
+      - root
+      - -e
+      - >-
+        DROP DATABASE IF EXISTS `{{ firephenix_db_name }}`;
+        CREATE DATABASE `{{ firephenix_db_name }}`;
+        CREATE USER IF NOT EXISTS '{{ firephenix_db_user }}'@'%' IDENTIFIED BY '{{ firephenix_db_password | replace("'", "''") }}';
+        ALTER USER '{{ firephenix_db_user }}'@'%' IDENTIFIED BY '{{ firephenix_db_password | replace("'", "''") }}';
+        GRANT ALL PRIVILEGES ON `{{ firephenix_db_name }}`.* TO '{{ firephenix_db_user }}'@'%';
+        FLUSH PRIVILEGES;
+    chdir: "{{ firephenix_stack_dir }}"
+  environment:
+    MYSQL_PWD: "{{ firephenix_db_root_password }}"
+  when:
+    - firephenix_creation_start_stack | bool
+    - firephenix_restore_database_reset | bool
+    - firephenix_mariadb_backup.stat.exists | default(false)
+  no_log: true
+  changed_when: false
+
+- name: Import MariaDB backup
+  ansible.builtin.shell:
+    cmd: >
+      docker compose exec -T -e MYSQL_PWD mariadb
+      mariadb -u root {{ firephenix_db_name }}
+      < {{ firephenix_remote_backup_dir }}/firephenix-backup/mariadb/{{ firephenix_db_name }}.sql
+    chdir: "{{ firephenix_stack_dir }}"
+  environment:
+    MYSQL_PWD: "{{ firephenix_db_root_password }}"
+  when:
+    - firephenix_creation_start_stack | bool
+    - firephenix_mariadb_backup.stat.exists | default(false)
+  no_log: true
+  changed_when: false
+
+- name: Start FirePhenix Docker stack
+  ansible.builtin.command:
+    cmd: docker compose up -d --force-recreate
+    chdir: "{{ firephenix_stack_dir }}"
+  when: firephenix_creation_start_stack | bool
+  changed_when: false

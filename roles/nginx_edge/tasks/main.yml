@@ -1,0 +1,5 @@
+---
+- ansible.builtin.import_tasks: nginx.yml
+- ansible.builtin.import_tasks: certbot.yml
+- ansible.builtin.import_tasks: crowdsec.yml
+

@@ -1,0 +1,14 @@
+---
+- name: Rebuild and provision the FirePhenix server
+  hosts: firephenix
+  vars_files:
+    - ../inventory/group_vars/vault.yml
+  roles:
+    - role: base_server
+    - role: auto_updates
+    - role: docker_host
+    - role: firephenix_stack
+      vars:
+        firephenix_stack_start_services: false
+    - role: nginx_edge
+    - role: restore_backup

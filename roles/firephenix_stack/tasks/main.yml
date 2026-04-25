@@ -1,0 +1,52 @@
+---
+- name: Ensure FirePhenix stack directory exists
+  ansible.builtin.file:
+    path: "{{ firephenix_stack_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Ensure FirePhenix data directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ firephenix_stack_dir }}/data"
+    - "{{ firephenix_teamspeak_data_dir }}"
+
+- name: Deploy FirePhenix docker-compose file
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ firephenix_stack_dir }}/docker-compose.yml"
+    mode: "0644"
+
+- name: Deploy FirePhenix environment file
+  ansible.builtin.template:
+    src: env.j2
+    dest: "{{ firephenix_stack_dir }}/.env"
+    mode: "0600"
+  no_log: true
+
+- name: Validate docker-compose configuration
+  ansible.builtin.command:
+    cmd: docker compose config --quiet
+    chdir: "{{ firephenix_stack_dir }}"
+  changed_when: false
+
+- name: Start selected FirePhenix services
+  ansible.builtin.shell:
+    cmd: "docker compose up -d {{ firephenix_stack_services | join(' ') }}"
+    chdir: "{{ firephenix_stack_dir }}"
+  when:
+    - firephenix_stack_start_services | bool
+    - firephenix_stack_services | length > 0
+  changed_when: false
+
+- name: Start full FirePhenix stack
+  ansible.builtin.command:
+    cmd: docker compose up -d
+    chdir: "{{ firephenix_stack_dir }}"
+  when:
+    - firephenix_stack_start_services | bool
+    - firephenix_stack_services | length == 0
+  changed_when: false

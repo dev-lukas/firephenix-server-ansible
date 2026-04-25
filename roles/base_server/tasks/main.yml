@@ -1,0 +1,128 @@
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install base packages
+  ansible.builtin.apt:
+    name: "{{ base_server_packages }}"
+    state: present
+
+- name: Set server timezone
+  community.general.timezone:
+    name: "{{ timezone }}"
+
+- name: Ensure admin user exists
+  ansible.builtin.user:
+    name: "{{ base_server_admin_user }}"
+    groups: "{{ base_server_admin_groups | join(',') }}"
+    append: true
+    shell: /bin/bash
+    create_home: true
+  when:
+    - base_server_manage_admin_user | bool
+    - base_server_admin_user != "root"
+
+- name: Install authorized keys for admin user
+  ansible.posix.authorized_key:
+    user: "{{ base_server_admin_user }}"
+    key: "{{ item }}"
+    state: present
+  loop: "{{ ssh_authorized_keys }}"
+  when: ssh_authorized_keys | length > 0
+
+- name: Install authorized keys for root
+  ansible.posix.authorized_key:
+    user: "root"
+    key: "{{ item }}"
+    state: present
+  loop: "{{ ssh_authorized_keys }}"
+  when:
+    - base_server_copy_keys_to_root | bool
+    - ssh_authorized_keys | length > 0
+
+- name: Allow passwordless sudo for admin user
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/90-{{ base_server_admin_user }}"
+    content: "{{ base_server_admin_user }} ALL=(ALL) NOPASSWD:ALL\n"
+    mode: "0440"
+    validate: "visudo -cf %s"
+  when:
+    - base_server_manage_admin_user | bool
+    - base_server_admin_user != "root"
+
+- name: Harden SSH settings
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?{{ item.key }}"
+    line: "{{ item.key }} {{ item.value }}"
+    state: present
+    backup: true
+  loop:
+    - { key: "PermitRootLogin", value: "prohibit-password" }
+    - { key: "PasswordAuthentication", value: "no" }
+    - { key: "KbdInteractiveAuthentication", value: "no" }
+    - { key: "PubkeyAuthentication", value: "yes" }
+    - { key: "MaxAuthTries", value: "3" }
+    - { key: "LoginGraceTime", value: "20" }
+    - { key: "X11Forwarding", value: "no" }
+    - { key: "ClientAliveInterval", value: "300" }
+    - { key: "ClientAliveCountMax", value: "2" }
+  notify: Restart ssh
+
+- name: Deploy sysctl hardening settings
+  ansible.builtin.copy:
+    dest: /etc/sysctl.d/99-security.conf
+    mode: "0644"
+    content: |
+      net.ipv4.ip_forward = 0
+      net.ipv6.conf.all.forwarding = 0
+      net.ipv4.conf.all.accept_redirects = 0
+      net.ipv4.conf.default.accept_redirects = 0
+      net.ipv6.conf.all.accept_redirects = 0
+      net.ipv6.conf.default.accept_redirects = 0
+      net.ipv4.conf.all.send_redirects = 0
+      net.ipv4.conf.default.send_redirects = 0
+      net.ipv4.conf.all.accept_source_route = 0
+      net.ipv4.conf.default.accept_source_route = 0
+      net.ipv6.conf.all.accept_source_route = 0
+      net.ipv6.conf.default.accept_source_route = 0
+      net.ipv4.conf.all.log_martians = 1
+      net.ipv4.conf.default.log_martians = 1
+      net.ipv4.icmp_echo_ignore_broadcasts = 1
+      net.ipv4.icmp_ignore_bogus_error_responses = 1
+      net.ipv4.tcp_syncookies = 1
+      net.ipv4.conf.all.rp_filter = 1
+      net.ipv4.conf.default.rp_filter = 1
+      net.ipv6.conf.all.accept_ra = 0
+      net.ipv6.conf.default.accept_ra = 0
+  notify: Apply sysctl settings
+
+- name: Set UFW default incoming policy
+  community.general.ufw:
+    direction: incoming
+    default: deny
+
+- name: Set UFW default outgoing policy
+  community.general.ufw:
+    direction: outgoing
+    default: allow
+
+- name: Allow TCP ports through UFW
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop: "{{ base_server_ufw_allowed_tcp_ports }}"
+
+- name: Allow UDP ports through UFW
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: udp
+  loop: "{{ base_server_ufw_allowed_udp_ports }}"
+
+- name: Enable UFW
+  community.general.ufw:
+    state: enabled

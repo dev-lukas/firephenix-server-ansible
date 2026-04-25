@@ -1,0 +1,69 @@
+---
+- name: Install certbot packages
+  ansible.builtin.apt:
+    name:
+      - certbot
+    state: present
+  when: nginx_edge_ssl_mode == "letsencrypt" or nginx_edge_obtain_certificates | bool
+
+- name: Ensure certbot timer is enabled
+  ansible.builtin.systemd:
+    name: certbot.timer
+    state: started
+    enabled: true
+  when: nginx_edge_ssl_mode == "letsencrypt" or nginx_edge_obtain_certificates | bool
+
+- name: Obtain Let's Encrypt certificate
+  ansible.builtin.command:
+    cmd: >
+      certbot certonly --webroot
+      -w {{ nginx_edge_webroot }}
+      -d {{ firephenix_site_domain }}
+      -d {{ firephenix_portfolio_domain }}
+      --email {{ nginx_edge_email }}
+      --agree-tos
+      --non-interactive
+      --keep-until-expiring
+  when: nginx_edge_obtain_certificates | bool
+  changed_when: false
+
+- name: Check if Let's Encrypt certificate exists
+  ansible.builtin.stat:
+    path: "/etc/letsencrypt/live/{{ firephenix_site_domain }}/fullchain.pem"
+  register: nginx_edge_le_cert
+  when: nginx_edge_ssl_mode == "letsencrypt" or nginx_edge_obtain_certificates | bool
+
+- name: Ensure certbot deploy hook directory exists
+  ansible.builtin.file:
+    path: /etc/letsencrypt/renewal-hooks/deploy
+    state: directory
+    mode: "0755"
+  when: nginx_edge_ssl_mode == "letsencrypt" or nginx_edge_obtain_certificates | bool
+
+- name: Point active SSL certificate to Let's Encrypt certificate
+  ansible.builtin.file:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    state: link
+    force: true
+  loop:
+    - src: "/etc/letsencrypt/live/{{ firephenix_site_domain }}/fullchain.pem"
+      dest: /etc/nginx/ssl/active/fullchain.pem
+    - src: "/etc/letsencrypt/live/{{ firephenix_site_domain }}/privkey.pem"
+      dest: /etc/nginx/ssl/active/privkey.pem
+  when:
+    - (nginx_edge_ssl_mode == "letsencrypt" or nginx_edge_obtain_certificates | bool)
+    - nginx_edge_le_cert is defined
+    - nginx_edge_le_cert.stat.exists
+  notify: Reload nginx
+
+- name: Install certbot deploy hook to reload nginx
+  ansible.builtin.copy:
+    dest: /etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh
+    mode: "0755"
+    content: |
+      #!/bin/sh
+      ln -sf /etc/letsencrypt/live/{{ firephenix_site_domain }}/fullchain.pem /etc/nginx/ssl/active/fullchain.pem
+      ln -sf /etc/letsencrypt/live/{{ firephenix_site_domain }}/privkey.pem /etc/nginx/ssl/active/privkey.pem
+      systemctl reload nginx
+  when: nginx_edge_ssl_mode == "letsencrypt" or nginx_edge_obtain_certificates | bool

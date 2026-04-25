@@ -1,0 +1,22 @@
+---
+timezone: "Europe/Berlin"
+
+ssh_authorized_keys:
+  - "ssh-ed25519 AAAA_REPLACE_WITH_YOUR_PUBLIC_KEY admin@example"
+
+base_server_admin_user: "deploy"
+base_server_copy_keys_to_root: false
+
+firephenix_stack_dir: "/opt/firephenix"
+firephenix_backup_dir: "/opt/firephenix/backups"
+
+firephenix_site_domain: "firephenix.example.com"
+firephenix_portfolio_domain: "portfolio.example.com"
+firephenix_site_url: "https://{{ firephenix_site_domain }}"
+
+firephenix_registry_url: "registry.example.com"
+firephenix_registry_username: "registry"
+firephenix_registry_public_ip_override: ""
+firephenix_registry_allow_private_dns: false
+
+nginx_edge_email: "admin@example.com"

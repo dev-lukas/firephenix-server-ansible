@@ -1,0 +1,28 @@
+---
+base_server_admin_user: "deploy"
+base_server_admin_groups:
+  - "sudo"
+base_server_manage_admin_user: true
+base_server_copy_keys_to_root: true
+
+base_server_packages:
+  - "apt-transport-https"
+  - "ca-certificates"
+  - "curl"
+  - "git"
+  - "gnupg"
+  - "jq"
+  - "python3"
+  - "python3-apt"
+  - "rsync"
+  - "sudo"
+  - "ufw"
+  - "unzip"
+  - "vim-tiny"
+
+base_server_ufw_allowed_tcp_ports:
+  - 22
+  - 80
+  - 443
+base_server_ufw_allowed_udp_ports: []
+

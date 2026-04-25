@@ -1,0 +1,11 @@
+---
+vault_firephenix_registry_password: ""
+vault_firephenix_db_root_password: ""
+vault_firephenix_db_password: ""
+vault_firephenix_secret_key: ""
+vault_firephenix_discord_token: ""
+vault_firephenix_ts3_password: ""
+vault_firephenix_ts3_api_key: ""
+vault_firephenix_ts3_privilige_key: ""
+vault_firephenix_openrouter_api_key: ""
+vault_firephenix_vpnapi_api_key: ""
