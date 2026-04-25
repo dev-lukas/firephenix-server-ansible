@@ -1,0 +1,13 @@
+---
+- name: Persist IPv4 forwarding for Docker bridge egress
+  ansible.builtin.copy:
+    dest: /etc/sysctl.d/60-docker-egress.conf
+    mode: "0644"
+    content: |
+      # Required for Docker bridge NAT so containers can reach external APIs.
+      net.ipv4.ip_forward = 1
+
+- name: Enable IPv4 forwarding for running Docker containers
+  ansible.builtin.command:
+    cmd: sysctl -w net.ipv4.ip_forward=1
+  changed_when: false

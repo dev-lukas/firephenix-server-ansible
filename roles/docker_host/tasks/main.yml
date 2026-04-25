@@ -48,6 +48,9 @@
     state: started
     enabled: true
 
+- name: Configure Docker container egress
+  ansible.builtin.include_tasks: egress.yml
+
 - name: Add admin user to docker group
   ansible.builtin.user:
     name: "{{ docker_host_admin_user }}"

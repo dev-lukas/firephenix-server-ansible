@@ -4,6 +4,14 @@
   gather_facts: false
   vars_files:
     - ../inventory/group_vars/vault.yml
+  vars:
+    # Deploys must never restore or reset state. These play-level defaults
+    # override restore-oriented inventory defaults, while explicit extra-vars
+    # still win and are rejected by the assertion below.
+    firephenix_local_backup_archive: ""
+    firephenix_restore_database: false
+    firephenix_restore_database_reset: false
+    firephenix_restore_teamspeak: false
   pre_tasks:
     - name: Refuse restore inputs in live deploy
       ansible.builtin.assert:
@@ -16,6 +24,10 @@
           playbooks/deploy.yml is a non-restore maintenance deploy. Do not pass
           backup or restore variables to it; use playbooks/creation.yml only for
           an intentional rebuild/restore.
+    - name: Ensure Docker containers can reach external APIs
+      ansible.builtin.include_role:
+        name: docker_host
+        tasks_from: egress
   roles:
     - role: firephenix_stack
       vars:
