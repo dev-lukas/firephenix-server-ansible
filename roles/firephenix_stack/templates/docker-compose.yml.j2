@@ -9,16 +9,6 @@ tmpfs:
   - /tmp:rw,noexec,nosuid,size=64m
 pids_limit: {{ firephenix_container_pids_limit }}
 {% endmacro %}
-{% macro process_security() %}
-security_opt:
-  - no-new-privileges:true
-cap_drop:
-  - ALL
-init: true
-tmpfs:
-  - /tmp:rw,noexec,nosuid,size=64m
-pids_limit: {{ firephenix_container_pids_limit }}
-{% endmacro %}
 {% macro web_security() %}
 security_opt:
   - no-new-privileges:true
@@ -135,6 +125,7 @@ services:
       VALKEY_PORT: "6379"
       SITE_URL: {{ firephenix_site_url }}
       PYTHONDONTWRITEBYTECODE: "1"
+      BOT_RUNNER_PID_FILE: /tmp/bot_runner.pid
     depends_on:
       mariadb:
         condition: service_healthy
@@ -145,7 +136,7 @@ services:
     networks:
       - edge
       - internal
-{{ process_security() | indent(4, true) }}
+{{ stateless_security() | indent(4, true) }}
 
   website:
     image: {{ firephenix_website_image }}
