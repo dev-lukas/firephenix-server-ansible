@@ -55,7 +55,7 @@
 
 - name: Start selected FirePhenix services
   ansible.builtin.command:
-    argv: "{{ ['docker', 'compose', 'up', '-d'] + firephenix_stack_services }}"
+    argv: "{{ ['docker', 'compose', 'up', '-d'] + (['--no-deps'] if firephenix_stack_no_deps | bool else []) + firephenix_stack_services }}"
     chdir: "{{ firephenix_stack_dir }}"
   when:
     - firephenix_stack_start_services | bool

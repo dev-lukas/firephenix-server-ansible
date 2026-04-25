@@ -12,6 +12,12 @@
           - bot
           - website
           - portfolio
+        firephenix_stack_services:
+          - backend
+          - bot
+          - website
+          - portfolio
+        firephenix_stack_no_deps: true
         firephenix_stack_start_services: true
     - role: nginx_edge
       vars:

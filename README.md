@@ -171,7 +171,7 @@ ansible-playbook playbooks/creation.yml \
 
 ### Deploy
 
-Updates the FirePhenix Docker stack and Nginx edge configuration without running host bootstrap, package installation, TLS bootstrap, Certbot, CrowdSec, or backup restore roles. It pulls only the application images (`backend`, `bot`, `website`, `portfolio`) before recreating the stack, leaving MariaDB, Valkey, and TeamSpeak images untouched. Use this for live configuration changes on an already deployed server.
+Updates the FirePhenix Docker stack and Nginx edge configuration without running host bootstrap, package installation, TLS bootstrap, Certbot, CrowdSec, or backup restore roles. It pulls and recreates only the application services (`backend`, `bot`, `website`, `portfolio`) with `--no-deps`, leaving MariaDB, Valkey, and TeamSpeak containers and images untouched. Use this for live configuration changes on an already deployed server.
 
 ```bash
 ansible-playbook playbooks/deploy.yml --ask-vault-pass
