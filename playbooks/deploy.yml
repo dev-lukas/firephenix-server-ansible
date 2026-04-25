@@ -4,6 +4,18 @@
   gather_facts: false
   vars_files:
     - ../inventory/group_vars/vault.yml
+  pre_tasks:
+    - name: Refuse restore inputs in live deploy
+      ansible.builtin.assert:
+        that:
+          - firephenix_local_backup_archive | default('') | length == 0
+          - not (firephenix_restore_database | default(false) | bool)
+          - not (firephenix_restore_database_reset | default(false) | bool)
+          - not (firephenix_restore_teamspeak | default(false) | bool)
+        fail_msg: >-
+          playbooks/deploy.yml is a non-restore maintenance deploy. Do not pass
+          backup or restore variables to it; use playbooks/creation.yml only for
+          an intentional rebuild/restore.
   roles:
     - role: firephenix_stack
       vars:
@@ -12,12 +24,6 @@
           - bot
           - website
           - portfolio
-        firephenix_stack_services:
-          - backend
-          - bot
-          - website
-          - portfolio
-        firephenix_stack_no_deps: true
         firephenix_stack_start_services: true
     - role: nginx_edge
       vars:
