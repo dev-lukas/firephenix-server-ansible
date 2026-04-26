@@ -22,6 +22,10 @@ firephenix_ts3_privilige_key: "{{ vault_firephenix_ts3_privilige_key | default('
 firephenix_openrouter_api_key: "{{ vault_firephenix_openrouter_api_key | default('') }}"
 firephenix_vpnapi_api_key: "{{ vault_firephenix_vpnapi_api_key | default('') }}"
 
+firephenix_cors_origins:
+  - "{{ firephenix_site_url }}"
+firephenix_limiter_storage_uri: "valkey://valkey:6379"
+
 firephenix_ts3_host: "teamspeak"
 firephenix_ts3_port: 10011
 firephenix_teamspeak_voice_port: 9987

@@ -18,6 +18,9 @@ firephenix_portfolio_bind_port: 8081
 
 firephenix_db_name: "firephenix"
 firephenix_db_user: "firephenix"
+firephenix_cors_origins:
+  - "{{ firephenix_site_url }}"
+firephenix_limiter_storage_uri: "valkey://valkey:6379"
 
 firephenix_creation_start_stack: true
 firephenix_local_backup_archive: ""
