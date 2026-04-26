@@ -25,7 +25,7 @@
     - firephenix_restore_teamspeak | bool
     - firephenix_teamspeak_backup.stat.exists | default(false)
 
-- name: Ensure TeamSpeak query allowlist exists
+- name: Ensure TeamSpeak query allowlist exists after restore
   ansible.builtin.file:
     path: "{{ firephenix_teamspeak_data_dir }}/query_ip_allowlist.txt"
     state: touch
@@ -34,7 +34,7 @@
     - firephenix_restore_teamspeak | bool
     - firephenix_teamspeak_backup.stat.exists | default(false)
 
-- name: Allow Docker internal network for TeamSpeak ServerQuery
+- name: Allow Docker internal network for TeamSpeak ServerQuery after restore
   ansible.builtin.lineinfile:
     path: "{{ firephenix_teamspeak_data_dir }}/query_ip_allowlist.txt"
     line: "{{ item }}"

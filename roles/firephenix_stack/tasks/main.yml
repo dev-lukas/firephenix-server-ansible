@@ -14,6 +14,20 @@
     - "{{ firephenix_stack_dir }}/data"
     - "{{ firephenix_teamspeak_data_dir }}"
 
+- name: Ensure TeamSpeak query allowlist exists
+  ansible.builtin.file:
+    path: "{{ firephenix_teamspeak_data_dir }}/query_ip_allowlist.txt"
+    state: touch
+    mode: "0664"
+
+- name: Allow Docker internal network for TeamSpeak ServerQuery
+  ansible.builtin.lineinfile:
+    path: "{{ firephenix_teamspeak_data_dir }}/query_ip_allowlist.txt"
+    line: "{{ item }}"
+    create: true
+    mode: "0664"
+  loop: "{{ firephenix_teamspeak_query_allowlist }}"
+
 - name: Deploy FirePhenix docker-compose file
   ansible.builtin.template:
     src: docker-compose.yml.j2

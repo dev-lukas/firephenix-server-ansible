@@ -19,4 +19,6 @@ firephenix_registry_username: "registry"
 firephenix_registry_public_ip_override: ""
 firephenix_registry_allow_private_dns: false
 
+firephenix_ci_deploy_authorized_keys: []
+
 nginx_edge_email: "admin@example.com"

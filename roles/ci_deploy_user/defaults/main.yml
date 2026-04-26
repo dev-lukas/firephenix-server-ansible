@@ -1,0 +1,15 @@
+---
+firephenix_ci_deploy_enabled: "{{ firephenix_ci_deploy_authorized_keys | length > 0 }}"
+firephenix_ci_deploy_user: "github-deploy"
+firephenix_ci_deploy_comment: "FirePhenix GitHub Actions deploy user"
+firephenix_ci_deploy_authorized_keys: []
+
+firephenix_ci_deploy_command_path: "/usr/local/sbin/firephenix-ci-deploy"
+firephenix_ci_deploy_ssh_wrapper_path: "/usr/local/bin/firephenix-ci-deploy-ssh"
+firephenix_ci_deploy_stack_dir: "{{ firephenix_stack_dir }}"
+firephenix_ci_deploy_log_file: "/var/log/firephenix-ci-deploy.log"
+firephenix_ci_deploy_services:
+  - backend
+  - bot
+  - website
+  - portfolio

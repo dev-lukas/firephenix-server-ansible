@@ -4,7 +4,26 @@
   gather_facts: false
   vars_files:
     - ../inventory/group_vars/vault.yml
-  tasks:
+  vars:
+    # Maintenance is safe for a live server and must never restore or reset
+    # persistent data. Explicit extra-vars still win and are rejected below.
+    firephenix_local_backup_archive: ""
+    firephenix_restore_database: false
+    firephenix_restore_database_reset: false
+    firephenix_restore_teamspeak: false
+  pre_tasks:
+    - name: Refuse restore inputs in live maintenance
+      ansible.builtin.assert:
+        that:
+          - firephenix_local_backup_archive | default('') | length == 0
+          - not (firephenix_restore_database | default(false) | bool)
+          - not (firephenix_restore_database_reset | default(false) | bool)
+          - not (firephenix_restore_teamspeak | default(false) | bool)
+        fail_msg: >-
+          playbooks/maintenance.yml is a non-restore live maintenance playbook.
+          Do not pass backup or restore variables to it; use playbooks/creation.yml
+          only for an intentional rebuild/restore.
+
     - name: Update apt cache
       ansible.builtin.apt:
         update_cache: true
@@ -19,18 +38,37 @@
         autoremove: true
         autoclean: true
 
-    - name: Pull and recreate FirePhenix Docker stack
-      ansible.builtin.command:
-        cmd: docker compose pull
-        chdir: "{{ firephenix_stack_dir }}"
-      changed_when: false
+    - name: Ensure Docker containers can reach external APIs
+      ansible.builtin.import_role:
+        name: docker_host
+        tasks_from: egress
+      tags:
+        - docker_egress
 
-    - name: Ensure FirePhenix Docker stack is running
-      ansible.builtin.command:
-        cmd: docker compose up -d
-        chdir: "{{ firephenix_stack_dir }}"
-      changed_when: false
+  roles:
+    - role: ci_deploy_user
+      tags:
+        - ci_deploy_user
+    - role: firephenix_stack
+      vars:
+        firephenix_stack_pull_services:
+          - backend
+          - bot
+          - website
+          - portfolio
+        firephenix_stack_start_services: true
+      tags:
+        - firephenix_stack
+    - role: nginx_edge
+      vars:
+        nginx_edge_manage_packages: false
+        nginx_edge_manage_bootstrap_certificate: false
+        nginx_edge_manage_certbot: false
+        nginx_edge_manage_crowdsec: false
+      tags:
+        - nginx_edge
 
+  tasks:
     - name: Prune unused Docker images
       ansible.builtin.command:
         cmd: docker image prune -f

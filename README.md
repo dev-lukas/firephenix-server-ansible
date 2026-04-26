@@ -46,7 +46,6 @@ firephenix-server-ansible/
 │       └── vault.yml.example
 ├── playbooks/
 │   ├── creation.yml
-│   ├── deploy.yml
 │   └── maintenance.yml
 ├── requirements.txt
 ├── requirements.yml
@@ -55,6 +54,7 @@ firephenix-server-ansible/
 └── roles/
     ├── auto_updates/
     ├── base_server/
+    ├── ci_deploy_user/
     ├── docker_host/
     ├── firephenix_stack/
     ├── nginx_edge/
@@ -144,7 +144,7 @@ Nginx enables request and connection limits by default through `nginx_edge_rate_
 
 ### Creation
 
-Hardens and provisions the reinstalled Debian 13 server, installs Docker, configures Nginx + CrowdSec, restores backup data, and deploys the Docker stack.
+Hardens and provisions the reinstalled Debian 13 server, installs Docker, configures the restricted GitHub deploy user, pulls the FirePhenix application images, configures Nginx + CrowdSec, restores backup data, and deploys the Docker stack.
 
 Do not use this playbook for routine live updates on an already deployed server. It includes restore roles and can reset MariaDB when restore variables are enabled.
 
@@ -169,21 +169,51 @@ ansible-playbook playbooks/creation.yml \
   -e nginx_edge_obtain_certificates=true
 ```
 
-### Deploy
-
-Updates the FirePhenix Docker stack and Nginx edge configuration without running host bootstrap, package installation, TLS bootstrap, Certbot, CrowdSec, or backup restore roles. It pulls only the application images (`backend`, `bot`, `website`, `portfolio`), then runs `docker compose up -d` for the full stack so container hardening is applied to MariaDB, Valkey, TeamSpeak, and app containers. Existing Docker volumes and the TeamSpeak bind mount are preserved.
-
-```bash
-ansible-playbook playbooks/deploy.yml --ask-vault-pass
-```
-
 ### Maintenance
 
-Updates packages, refreshes the Docker stack, validates Nginx, and refreshes CrowdSec hub content.
+Updates the live FirePhenix server without running backup restore roles. It upgrades packages, reapplies the restricted GitHub deploy user, refreshes the Docker egress sysctl, updates the FirePhenix Docker Compose and environment files, pulls only the application images (`backend`, `bot`, `website`, `portfolio`), reapplies the Nginx edge configuration without touching Certbot or CrowdSec package setup, prunes unused Docker images, and refreshes CrowdSec hub content.
+
+Existing Docker volumes and the TeamSpeak bind mount are preserved. The playbook rejects backup and restore variables; use `creation.yml` only for an intentional rebuild/restore.
 
 ```bash
 ansible-playbook playbooks/maintenance.yml --ask-vault-pass
 ```
+
+For an Ansible-driven deploy without package maintenance, run only the live deploy tags:
+
+```bash
+ansible-playbook playbooks/maintenance.yml --ask-vault-pass --tags docker_egress,firephenix_stack,nginx_edge
+```
+
+### GitHub Actions Deploy User
+
+For CI/CD, use a separate SSH key and a restricted server user instead of the full admin user. Generate the private key locally and put only the private key into the GitHub `VPS_SSH_KEY` secret:
+
+```bash
+mkdir -p .secrets
+ssh-keygen -t ed25519 -C "github-actions-firephenix-deploy" -f .secrets/firephenix_github_deploy -N ""
+```
+
+Add the generated public key to your ignored inventory file:
+
+```yaml
+firephenix_ci_deploy_authorized_keys:
+  - "ssh-ed25519 AAAA_REPLACE_WITH_GENERATED_PUBLIC_KEY github-actions-firephenix-deploy"
+```
+
+Apply only the deploy-user hardening to an existing server:
+
+```bash
+ansible-playbook playbooks/maintenance.yml --ask-vault-pass --tags ci_deploy_user
+```
+
+Use these GitHub Secrets:
+
+- `VPS_HOST`: the FirePhenix server hostname or IP
+- `VPS_USER`: `github-deploy`
+- `VPS_SSH_KEY`: contents of `.secrets/firephenix_github_deploy`
+
+That SSH key is forced to run `/usr/local/bin/firephenix-ci-deploy-ssh`, which can only sudo the root-owned `/usr/local/sbin/firephenix-ci-deploy` command. The deploy command runs `docker compose pull` and `docker compose up -d --no-deps` only for `backend`, `bot`, `website`, and `portfolio` in `firephenix_stack_dir`. The user is not added to `sudo` or `docker`.
 
 ## Backup Workflow
 

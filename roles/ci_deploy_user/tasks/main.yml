@@ -1,0 +1,75 @@
+---
+- name: Skip CI deploy user when no deploy key is configured
+  ansible.builtin.debug:
+    msg: >-
+      firephenix_ci_deploy_authorized_keys is empty, so the restricted GitHub
+      deploy user is not managed.
+  when: not (firephenix_ci_deploy_enabled | bool)
+
+- name: Configure restricted CI deploy user
+  when: firephenix_ci_deploy_enabled | bool
+  block:
+    - name: Validate CI deploy configuration
+      ansible.builtin.assert:
+        that:
+          - firephenix_ci_deploy_user | length > 0
+          - firephenix_ci_deploy_authorized_keys | length > 0
+          - firephenix_ci_deploy_services | length > 0
+          - firephenix_ci_deploy_command_path is match('^/')
+          - firephenix_ci_deploy_ssh_wrapper_path is match('^/')
+          - firephenix_ci_deploy_stack_dir is match('^/')
+        fail_msg: >-
+          CI deploy user configuration must include an absolute command path,
+          absolute stack path, at least one service, and at least one SSH public key.
+
+    - name: Ensure CI deploy group exists
+      ansible.builtin.group:
+        name: "{{ firephenix_ci_deploy_user }}"
+        state: present
+
+    - name: Ensure CI deploy user exists without privileged groups
+      ansible.builtin.user:
+        name: "{{ firephenix_ci_deploy_user }}"
+        comment: "{{ firephenix_ci_deploy_comment }}"
+        group: "{{ firephenix_ci_deploy_user }}"
+        groups: ""
+        append: false
+        shell: /bin/bash
+        create_home: true
+        password_lock: true
+
+    - name: Install forced-command deploy SSH keys
+      ansible.posix.authorized_key:
+        user: "{{ firephenix_ci_deploy_user }}"
+        key: "{{ item }}"
+        state: present
+        manage_dir: true
+        key_options: >-
+          command="{{ firephenix_ci_deploy_ssh_wrapper_path }}",no-agent-forwarding,no-X11-forwarding,no-port-forwarding,no-pty,no-user-rc
+      loop: "{{ firephenix_ci_deploy_authorized_keys }}"
+
+    - name: Install root-owned CI deploy command
+      ansible.builtin.template:
+        src: firephenix-ci-deploy.j2
+        dest: "{{ firephenix_ci_deploy_command_path }}"
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Install SSH forced-command wrapper
+      ansible.builtin.template:
+        src: firephenix-ci-deploy-ssh.j2
+        dest: "{{ firephenix_ci_deploy_ssh_wrapper_path }}"
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Allow CI deploy user to run only the deploy command as root
+      ansible.builtin.copy:
+        dest: "/etc/sudoers.d/80-{{ firephenix_ci_deploy_user }}-deploy"
+        owner: root
+        group: root
+        mode: "0440"
+        content: |
+          {{ firephenix_ci_deploy_user }} ALL=(root) NOPASSWD: {{ firephenix_ci_deploy_command_path }}
+        validate: "visudo -cf %s"
