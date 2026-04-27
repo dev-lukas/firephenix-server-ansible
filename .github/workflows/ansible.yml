@@ -14,7 +14,6 @@ jobs:
   ansible:
     uses: dev-lukas/ci-cd-actions/.github/workflows/ansible-checks.yml@main
     with:
-      runs_on: ubuntu-latest
       python_version: "3.13"
       requirements_file: requirements.txt
       galaxy_requirements_file: requirements.yml
