@@ -4,5 +4,7 @@
 DB_USER={{ dotenv_quote(firephenix_db_user) }}
 DB_PASSWORD={{ dotenv_quote(firephenix_db_password) }}
 SECRET_KEY={{ dotenv_quote(firephenix_secret_key) }}
+CORS_ORIGINS={{ dotenv_quote(firephenix_cors_origins | join(',')) }}
+LIMITER_STORAGE_URI={{ dotenv_quote(firephenix_limiter_storage_uri) }}
 OPENROUTER_API_KEY={{ dotenv_quote(firephenix_openrouter_api_key) }}
 VPNAPI_API_KEY={{ dotenv_quote(firephenix_vpnapi_api_key) }}

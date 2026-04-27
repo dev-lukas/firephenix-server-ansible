@@ -134,6 +134,8 @@ The Docker stack writes separate service environment files under `firephenix_sta
 - `.env.backend` for backend-only app credentials and backend API keys
 - `.env.bot` for bot, Discord, and TeamSpeak credentials
 
+The backend also receives `CORS_ORIGINS` and `LIMITER_STORAGE_URI` from `firephenix_cors_origins` and `firephenix_limiter_storage_uri`. The default limiter URI is `valkey://valkey:6379`, which targets the Compose service name from inside the backend container.
+
 The legacy shared `.env` file is removed during deployment so app containers do not keep receiving the database root password or unrelated service tokens.
 
 Stateless containers run with `no-new-privileges`, read-only root filesystems, tmpfs scratch space, process limits, and dropped Linux capabilities where practical. The backend and bot default to user `1000:1000`; override `firephenix_backend_container_user` or `firephenix_bot_container_user` if your images require a different runtime UID. The bot writes its legacy PID file to `/tmp/bot_runner.pid`, so it stays compatible with read-only application filesystems.

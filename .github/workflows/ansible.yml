@@ -1,0 +1,29 @@
+name: FirePhenix Ansible CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ansible:
+    uses: dev-lukas/ci-cd-actions/.github/workflows/ansible-checks.yml@main
+    with:
+      python_version: "3.13"
+      requirements_file: requirements.txt
+      galaxy_requirements_file: requirements.yml
+      yaml_lint_command: |
+        yamllint -d '{extends: default, rules: {line-length: disable, empty-lines: disable, braces: disable}}' $(git ls-files '*.yml')
+      ansible_lint_command: |
+        .github/ci/prepare-example-inventory.sh
+        ansible-lint --offline --skip-list yaml,var-naming,command-instead-of-module,risky-shell-pipe,name playbooks roles
+      syntax_check_command: |
+        .github/ci/prepare-example-inventory.sh
+        for playbook in playbooks/*.yml; do
+          ansible-playbook --syntax-check "$playbook"
+        done
