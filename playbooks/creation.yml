@@ -15,6 +15,7 @@
           - bot
           - website
           - portfolio
+          - ttt
         firephenix_stack_start_services: false
     - role: nginx_edge
     - role: restore_backup

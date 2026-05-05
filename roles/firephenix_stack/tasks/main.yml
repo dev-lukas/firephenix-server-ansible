@@ -13,6 +13,7 @@
   loop:
     - "{{ firephenix_stack_dir }}/data"
     - "{{ firephenix_teamspeak_data_dir }}"
+    - "{{ firephenix_ttt_data_dir }}"
 
 - name: Ensure TeamSpeak query allowlist exists
   ansible.builtin.file:
@@ -46,7 +47,110 @@
       dest: .env.backend
     - src: env-bot.j2
       dest: .env.bot
+    - src: env-ttt.j2
+      dest: .env.ttt
   no_log: true
+
+- name: Install Counter-Strike Source content for TTT
+  ansible.builtin.shell: |
+    set -euo pipefail
+    work_parent="{{ firephenix_ttt_css_work_dir }}"
+    mkdir -p "$work_parent"
+    work_dir="$(mktemp -d "$work_parent/install.XXXXXX")"
+    container_name="firephenix-css-content-install-ansible"
+    cleanup() {
+      docker rm -f "$container_name" >/dev/null 2>&1 || true
+      rm -rf "$work_dir"
+    }
+    trap cleanup EXIT
+
+    chmod 0777 "$work_dir"
+    docker rm -f "$container_name" >/dev/null 2>&1 || true
+    source_dir="$work_dir/serverfiles/cstrike"
+    target_dir="{{ firephenix_ttt_data_dir }}/serverfiles/cstrike"
+    logs_file="$work_dir/css-install.log"
+    install_timeout="{{ firephenix_ttt_css_install_timeout_seconds }}"
+
+    timeout --kill-after=60s "$install_timeout" docker run \
+      --name "$container_name" \
+      --rm \
+      -v "$work_dir:/data" \
+      --entrypoint /bin/bash \
+      "{{ firephenix_ttt_css_image }}" \
+      -lc '
+        set -euo pipefail
+        export HOME=/data
+        gameserver="${GAMESERVER:-cssserver}"
+        serverfiles="${LGSM_SERVERFILES:-/data/serverfiles}"
+        logdir="${LGSM_LOGDIR:-/data/log}"
+        configdir="${LGSM_CONFIG:-/data/lgsm/config-lgsm}"
+        datadir="${LGSM_DATADIR:-/data/lgsm/data}"
+
+        mkdir -p \
+          "$serverfiles" \
+          "$logdir/script" \
+          "$logdir/console" \
+          "$configdir" \
+          "$datadir"
+        chown -R linuxgsm:linuxgsm /data /app
+        cd /app
+
+        export gameserver serverfiles logdir configdir datadir
+        gosu linuxgsm bash -lc '"'"'
+          set -euo pipefail
+          cd /app
+
+          if [ ! -f "$gameserver" ]; then
+            ./linuxgsm.sh "$gameserver"
+          fi
+
+          ensure_link() {
+            link_path="$1"
+            target_path="$2"
+            if [ ! -e "$link_path" ] && [ ! -L "$link_path" ]; then
+              ln -s "$target_path" "$link_path"
+            fi
+          }
+
+          ensure_link /app/lgsm/config-lgsm "$configdir"
+          ensure_link /app/serverfiles "$serverfiles"
+          ensure_link /app/log "$logdir"
+          ensure_link /app/lgsm/data "$datadir"
+
+          ./"$gameserver" auto-install install=1
+        '"'"'
+      ' 2>&1 | tee "$logs_file"
+
+    if [ ! -f "$source_dir/gameinfo.txt" ]; then
+      echo "CS:S LinuxGSM install completed without cstrike/gameinfo.txt" >&2
+      echo "Installer output:" >&2
+      cat "$logs_file" >&2 || true
+      exit 1
+    fi
+
+    if ! find "$source_dir" -mindepth 1 -maxdepth 1 | read -r _; then
+      echo "CS:S LinuxGSM install produced an empty cstrike directory" >&2
+      echo "Installer output:" >&2
+      cat "$logs_file" >&2 || true
+      exit 1
+    fi
+    docker rm "$container_name" >/dev/null 2>&1 || true
+
+    mkdir -p "$(dirname "$target_dir")"
+    if command -v rsync >/dev/null 2>&1; then
+      mkdir -p "$target_dir"
+      rsync -a --delete "$source_dir/" "$target_dir/"
+    else
+      rm -rf "$target_dir"
+      mkdir -p "$target_dir"
+      cp -a "$source_dir/." "$target_dir/"
+    fi
+  args:
+    executable: /bin/bash
+    creates: "{{ firephenix_ttt_data_dir }}/serverfiles/cstrike/gameinfo.txt"
+  tags:
+    - never
+    - ttt_css_content
 
 - name: Remove legacy shared environment file
   ansible.builtin.file:

@@ -9,6 +9,7 @@ firephenix_stack_no_deps: false
 firephenix_backend_image: "{{ firephenix_registry_url }}/firephenix-backend:latest"
 firephenix_website_image: "{{ firephenix_registry_url }}/firephenix-website:latest"
 firephenix_portfolio_image: "{{ firephenix_registry_url }}/portfolio:latest"
+firephenix_ttt_image: "{{ firephenix_registry_url }}/firephenix-ttt:latest"
 
 firephenix_db_name: "firephenix"
 firephenix_db_user: "firephenix"
@@ -21,6 +22,10 @@ firephenix_ts3_api_key: "{{ vault_firephenix_ts3_api_key | default('') }}"
 firephenix_ts3_privilige_key: "{{ vault_firephenix_ts3_privilige_key | default('') }}"
 firephenix_openrouter_api_key: "{{ vault_firephenix_openrouter_api_key | default('') }}"
 firephenix_vpnapi_api_key: "{{ vault_firephenix_vpnapi_api_key | default('') }}"
+admin_steam_ids: "{{ vault_admin_steam_ids | default([]) }}"
+ttt_gslt: "{{ vault_ttt_gslt | default('') }}"
+ttt_rcon_password: "{{ vault_ttt_rcon_password | default('') }}"
+ttt_server_password: "{{ vault_ttt_server_password | default('') }}"
 
 firephenix_cors_origins:
   - "{{ firephenix_site_url }}"
@@ -31,6 +36,12 @@ firephenix_ts3_port: 10011
 firephenix_teamspeak_voice_port: 9987
 firephenix_teamspeak_file_port: 30033
 firephenix_teamspeak_data_dir: "{{ firephenix_stack_dir }}/data/teamspeak"
+firephenix_ttt_port: 27015
+firephenix_ttt_data_dir: "{{ firephenix_stack_dir }}/data/ttt"
+firephenix_ttt_css_image: "ghcr.io/gameservermanagers/gameserver:css"
+firephenix_ttt_css_work_dir: "{{ firephenix_stack_dir }}/tmp/ttt-css-content"
+firephenix_ttt_css_install_timeout_seconds: 3600
+firephenix_ttt_update_check_minutes: 60
 firephenix_docker_internal_subnet: "172.30.0.0/24"
 firephenix_teamspeak_query_allowlist:
   - "127.0.0.1/32"
@@ -44,3 +55,4 @@ firephenix_portfolio_bind_port: 8081
 firephenix_backend_container_user: "1000:1000"
 firephenix_bot_container_user: "1000:1000"
 firephenix_container_pids_limit: 256
+firephenix_ttt_container_pids_limit: 1024

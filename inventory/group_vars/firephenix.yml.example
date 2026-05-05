@@ -7,10 +7,12 @@ base_server_ufw_allowed_tcp_ports:
 
 base_server_ufw_allowed_udp_ports:
   - 9987
+  - 27015
 
 firephenix_backend_image: "{{ firephenix_registry_url }}/firephenix-backend:latest"
 firephenix_website_image: "{{ firephenix_registry_url }}/firephenix-website:latest"
 firephenix_portfolio_image: "{{ firephenix_registry_url }}/portfolio:latest"
+firephenix_ttt_image: "{{ firephenix_registry_url }}/firephenix-ttt:latest"
 
 firephenix_backend_bind_port: 5000
 firephenix_website_bind_port: 18080
@@ -34,7 +36,14 @@ firephenix_ts3_port: 10011
 firephenix_teamspeak_voice_port: 9987
 firephenix_teamspeak_file_port: 30033
 firephenix_teamspeak_data_dir: "{{ firephenix_stack_dir }}/data/teamspeak"
+firephenix_ttt_port: 27015
+firephenix_ttt_data_dir: "{{ firephenix_stack_dir }}/data/ttt"
 firephenix_docker_internal_subnet: "172.30.0.0/24"
+
+admin_steam_ids: []
+ttt_gslt: ""
+ttt_rcon_password: ""
+ttt_server_password: ""
 
 nginx_edge_ssl_mode: "letsencrypt"
 nginx_edge_obtain_certificates: true
