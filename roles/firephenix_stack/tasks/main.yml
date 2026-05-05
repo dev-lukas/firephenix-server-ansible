@@ -51,6 +51,16 @@
       dest: .env.ttt
   no_log: true
 
+- name: Require FirePhenix TTT server credentials
+  ansible.builtin.assert:
+    that:
+      - ttt_gslt | length > 0
+      - ttt_rcon_password | length > 0
+    fail_msg: >-
+      TTT requires vault_ttt_gslt and vault_ttt_rcon_password to be set.
+      ttt_server_password is optional and may be empty for a public server.
+  no_log: true
+
 - name: Install Counter-Strike Source content for TTT
   ansible.builtin.shell: |
     set -euo pipefail

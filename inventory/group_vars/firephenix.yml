@@ -44,9 +44,9 @@ firephenix_ttt_data_dir: "{{ firephenix_stack_dir }}/data/ttt"
 firephenix_docker_internal_subnet: "172.30.0.0/24"
 
 admin_steam_ids: []
-ttt_gslt: ""
-ttt_rcon_password: ""
-ttt_server_password: ""
+ttt_gslt: "{{ vault_ttt_gslt | default('') }}"
+ttt_rcon_password: "{{ vault_ttt_rcon_password | default('') }}"
+ttt_server_password: "{{ vault_ttt_server_password | default('') }}"
 
 nginx_edge_ssl_mode: "letsencrypt"
 nginx_edge_obtain_certificates: true
