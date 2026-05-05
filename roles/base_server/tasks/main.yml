@@ -99,30 +99,8 @@
       net.ipv6.conf.default.accept_ra = 0
   notify: Apply sysctl settings
 
-- name: Set UFW default incoming policy
-  community.general.ufw:
-    direction: incoming
-    default: deny
-
-- name: Set UFW default outgoing policy
-  community.general.ufw:
-    direction: outgoing
-    default: allow
-
-- name: Allow TCP ports through UFW
-  community.general.ufw:
-    rule: allow
-    port: "{{ item }}"
-    proto: tcp
-  loop: "{{ base_server_ufw_allowed_tcp_ports }}"
-
-- name: Allow UDP ports through UFW
-  community.general.ufw:
-    rule: allow
-    port: "{{ item }}"
-    proto: udp
-  loop: "{{ base_server_ufw_allowed_udp_ports }}"
-
-- name: Enable UFW
-  community.general.ufw:
-    state: enabled
+- name: Configure UFW firewall
+  ansible.builtin.import_tasks: ufw.yml
+  tags:
+    - ufw
+    - firewall

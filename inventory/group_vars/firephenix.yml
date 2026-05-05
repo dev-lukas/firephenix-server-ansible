@@ -4,10 +4,13 @@ base_server_ufw_allowed_tcp_ports:
   - 80
   - 443
   - 30033
+  - 27015
 
 base_server_ufw_allowed_udp_ports:
   - 9987
+  - 27005
   - 27015
+  - 27020
 
 firephenix_backend_image: "{{ firephenix_registry_url }}/firephenix-backend:latest"
 firephenix_website_image: "{{ firephenix_registry_url }}/firephenix-website:latest"

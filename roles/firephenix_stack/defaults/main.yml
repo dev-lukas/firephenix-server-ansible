@@ -37,6 +37,8 @@ firephenix_teamspeak_voice_port: 9987
 firephenix_teamspeak_file_port: 30033
 firephenix_teamspeak_data_dir: "{{ firephenix_stack_dir }}/data/teamspeak"
 firephenix_ttt_port: 27015
+firephenix_ttt_client_port: 27005
+firephenix_ttt_sourcetv_port: 27020
 firephenix_ttt_data_dir: "{{ firephenix_stack_dir }}/data/ttt"
 firephenix_ttt_css_image: "ghcr.io/gameservermanagers/gameserver:css"
 firephenix_ttt_css_work_dir: "{{ firephenix_stack_dir }}/tmp/ttt-css-content"

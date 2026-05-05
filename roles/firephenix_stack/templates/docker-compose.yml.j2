@@ -154,7 +154,10 @@ services:
       valkey:
         condition: service_healthy
     ports:
+      - "{{ firephenix_ttt_port }}:27015/tcp"
       - "{{ firephenix_ttt_port }}:27015/udp"
+      - "{{ firephenix_ttt_client_port }}:27005/udp"
+      - "{{ firephenix_ttt_sourcetv_port }}:27020/udp"
     volumes:
       - "{{ firephenix_ttt_data_dir }}:/data"
     networks:

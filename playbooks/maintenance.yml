@@ -45,6 +45,14 @@
       tags:
         - docker_egress
 
+    - name: Reapply UFW firewall port rules
+      ansible.builtin.import_role:
+        name: base_server
+        tasks_from: ufw
+      tags:
+        - ufw
+        - firewall
+
   roles:
     - role: ci_deploy_user
       tags:
