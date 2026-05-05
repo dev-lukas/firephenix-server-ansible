@@ -136,6 +136,31 @@ services:
       - internal
 {{ stateless_security() | indent(4, true) }}
 
+  ttt:
+    image: {{ firephenix_ttt_image }}
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    init: true
+    pids_limit: {{ firephenix_ttt_container_pids_limit }}
+    env_file:
+      - .env.ttt
+    environment:
+      VALKEY_HOST: valkey
+      VALKEY_PORT: "6379"
+      TTT_SERVER_ID: ttt
+      UPDATE_CHECK: "{{ firephenix_ttt_update_check_minutes }}"
+    depends_on:
+      valkey:
+        condition: service_healthy
+    ports:
+      - "{{ firephenix_ttt_port }}:27015/udp"
+    volumes:
+      - "{{ firephenix_ttt_data_dir }}:/data"
+    networks:
+      - edge
+      - internal
+
   website:
     image: {{ firephenix_website_image }}
     restart: unless-stopped

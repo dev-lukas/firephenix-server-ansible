@@ -9,3 +9,7 @@ vault_firephenix_ts3_api_key: ""
 vault_firephenix_ts3_privilige_key: ""
 vault_firephenix_openrouter_api_key: ""
 vault_firephenix_vpnapi_api_key: ""
+vault_admin_steam_ids: []
+vault_ttt_gslt: ""
+vault_ttt_rcon_password: ""
+vault_ttt_server_password: ""

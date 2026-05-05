@@ -24,12 +24,12 @@ firephenix_cors_origins:
   - "{{ firephenix_site_url }}"
 firephenix_limiter_storage_uri: "valkey://valkey:6379"
 
-firephenix_creation_start_stack: true
+firephenix_creation_start_stack: false
 firephenix_local_backup_archive: ""
 firephenix_remote_backup_dir: "/opt/firephenix/restore"
-firephenix_restore_database: true
-firephenix_restore_database_reset: true
-firephenix_restore_teamspeak: true
+firephenix_restore_database: false
+firephenix_restore_database_reset: false
+firephenix_restore_teamspeak: false
 
 firephenix_ts3_host: "teamspeak"
 firephenix_ts3_port: 10011

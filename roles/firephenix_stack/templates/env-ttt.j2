@@ -1,0 +1,6 @@
+{% macro dotenv_quote(value) -%}
+'{{ (value | string) | replace("'", "\\'") }}'
+{%- endmacro %}
+ttt_gslt={{ dotenv_quote(ttt_gslt) }}
+ttt_rcon_password={{ dotenv_quote(ttt_rcon_password) }}
+ttt_server_password={{ dotenv_quote(ttt_server_password) }}
