@@ -15,7 +15,3 @@ venv/
 *.backup
 *.tmp
 *.log
-inventory/hosts.yml
-inventory/group_vars/all.yml
-inventory/group_vars/firephenix.yml
-inventory/group_vars/vault.yml

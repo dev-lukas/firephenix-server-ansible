@@ -1,0 +1,26 @@
+---
+timezone: "Europe/Berlin"
+
+ssh_authorized_keys:
+  - "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIAbJvERLxQAbXMZDvuPqNNTvrhLj+HLUdvWdGhf/QA/0AAAABHNzaDo= PC Key"
+  - "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIOf70dFGulaLfWDUzJArmkEsxwkashhb4d38myfC4zaqAAAABHNzaDo= Laptop Key"
+  - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJayYNbpFgJrGx93pU/QEEtfYWnDublOuLCvvx/1CqhJ firephenix-dev-vm"
+
+base_server_admin_user: "deploy"
+base_server_copy_keys_to_root: false
+
+firephenix_stack_dir: "/opt/firephenix"
+firephenix_backup_dir: "/opt/firephenix/backups"
+
+firephenix_site_domain: "firephenix.de"
+firephenix_portfolio_domain: "lukas-roth.dev"
+firephenix_site_url: "https://{{ firephenix_site_domain }}"
+
+firephenix_registry_url: "registry.lukas-roth.dev"
+firephenix_registry_username: "registry"
+firephenix_registry_public_ip_override: ""
+firephenix_registry_allow_private_dns: false
+
+firephenix_ci_deploy_authorized_keys: []
+
+nginx_edge_email: "admin@firephenix.de"
