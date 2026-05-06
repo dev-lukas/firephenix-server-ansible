@@ -4,11 +4,39 @@ set -euo pipefail
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 STACK_DIR={{ firephenix_ci_deploy_stack_dir | quote }}
 LOG_FILE={{ firephenix_ci_deploy_log_file | quote }}
-SERVICES=(
+ALLOWED_SERVICES=(
 {%- for service in firephenix_ci_deploy_services %}
   {{ service | quote }}
 {%- endfor %}
 )
+
+if [ "$#" -gt 0 ]; then
+  SERVICES=("$@")
+else
+  SERVICES=("${ALLOWED_SERVICES[@]}")
+fi
+
+for service in "${SERVICES[@]}"; do
+  case "$service" in
+    *[!A-Za-z0-9_.-]*|"")
+      echo "Invalid deploy service: $service" >&2
+      exit 1
+      ;;
+  esac
+
+  found=0
+  for allowed in "${ALLOWED_SERVICES[@]}"; do
+    if [ "$service" = "$allowed" ]; then
+      found=1
+      break
+    fi
+  done
+
+  if [ "$found" -ne 1 ]; then
+    echo "Unknown deploy service: $service" >&2
+    exit 1
+  fi
+done
 
 mkdir -p "$(dirname "$LOG_FILE")"
 touch "$LOG_FILE"
@@ -20,8 +48,13 @@ echo "[$(date --iso-8601=seconds)] Starting FirePhenix CI deploy"
 cd "$STACK_DIR"
 
 docker compose config --quiet
+echo "Deploying services: ${SERVICES[*]}"
 docker compose pull "${SERVICES[@]}"
-docker compose up -d --no-deps "${SERVICES[@]}"
+if ! docker compose up -d --no-deps "${SERVICES[@]}"; then
+  echo "Deploy failed; removing selected service containers and retrying"
+  docker compose rm -sf "${SERVICES[@]}" || true
+  docker compose up -d --no-deps "${SERVICES[@]}"
+fi
 docker compose ps "${SERVICES[@]}"
 
 echo "[$(date --iso-8601=seconds)] FirePhenix CI deploy finished"
