@@ -43,7 +43,7 @@ firephenix_ttt_port: 27015
 firephenix_ttt_data_dir: "{{ firephenix_stack_dir }}/data/ttt"
 firephenix_docker_internal_subnet: "172.30.0.0/24"
 
-admin_steam_ids: []
+admin_steam_ids: "{{ vault_admin_steam_ids | default([]) }}" 
 ttt_gslt: "{{ vault_ttt_gslt | default('') }}"
 ttt_rcon_password: "{{ vault_ttt_rcon_password | default('') }}"
 ttt_server_password: "{{ vault_ttt_server_password | default('') }}"
