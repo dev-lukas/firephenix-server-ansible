@@ -34,7 +34,8 @@ firephenix_restore_database: false
 firephenix_restore_database_reset: false
 firephenix_restore_teamspeak: false
 
-firephenix_ts3_host: "teamspeak"
+firephenix_ts3_internal_alias: "teamspeak-internal"
+firephenix_ts3_host: "{{ firephenix_ts3_internal_alias }}"
 firephenix_ts3_port: 10011
 firephenix_teamspeak_voice_port: 9987
 firephenix_teamspeak_file_port: 30033

@@ -259,7 +259,7 @@ Typical flow:
 
 - The creation playbook restores TeamSpeak directly into Docker storage from backup.
 - TeamSpeak restore extracts archives with `--no-same-owner`, matching the successful dev restore test and avoiding numeric UID/GID dependency from the old host.
-- The Docker internal network is pinned to `172.30.0.0/24`, and that CIDR is added to TeamSpeak `query_ip_allowlist.txt` so the bot is not query rate limited.
+- The Docker internal network is pinned to `172.30.0.0/24`; the bot connects to TeamSpeak through an internal-only DNS alias, and that CIDR is added to TeamSpeak `query_ip_allowlist.txt` so the bot is not query rate limited.
 - `licensekey.dat` is not required for your current setup and is not treated as a blocker by this project.
 - CrowdSec is configured for Nginx and SSH log ingestion, with the firewall bouncer blocking bad actors at the host level.
 - The Docker stack itself is not internet-facing; only host Nginx is.

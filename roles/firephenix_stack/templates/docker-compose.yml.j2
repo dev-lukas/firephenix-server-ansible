@@ -72,8 +72,10 @@ services:
     volumes:
       - "{{ firephenix_teamspeak_data_dir }}:/var/ts3server"
     networks:
-      - edge
-      - internal
+      edge:
+      internal:
+        aliases:
+          - "{{ firephenix_ts3_internal_alias }}"
     healthcheck:
       test: ["CMD-SHELL", "echo quit | nc localhost 10011 | grep -q TS3"]
       interval: 15s
