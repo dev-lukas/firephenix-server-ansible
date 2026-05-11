@@ -47,12 +47,16 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+    command: ["valkey-server", "--aclfile", "/usr/local/etc/valkey/users.acl"]
+    env_file:
+      - .env.valkey
     volumes:
       - valkey_data:/data
+      - ./valkey-users.acl:/usr/local/etc/valkey/users.acl:ro
     networks:
       - internal
     healthcheck:
-      test: ["CMD", "valkey-cli", "ping"]
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$${VALKEY_HEALTH_PASSWORD}\" valkey-cli --user \"$${VALKEY_HEALTH_USER}\" ping | grep -q PONG"]
       interval: 5s
       timeout: 3s
       retries: 5

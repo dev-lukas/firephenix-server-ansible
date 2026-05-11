@@ -29,6 +29,36 @@
     mode: "0664"
   loop: "{{ firephenix_teamspeak_query_allowlist }}"
 
+- name: Require FirePhenix Valkey ACL credentials
+  ansible.builtin.assert:
+    that:
+      - item.password | length >= 32
+      - item.password is match('^\S+$')
+    fail_msg: >-
+      Valkey ACL password for {{ item.name }} must be at least 32 characters
+      and contain no whitespace.
+  loop:
+    - name: backend
+      password: "{{ firephenix_valkey_backend_password }}"
+    - name: bot
+      password: "{{ firephenix_valkey_bot_password }}"
+    - name: ttt
+      password: "{{ firephenix_valkey_ttt_password }}"
+    - name: limiter
+      password: "{{ firephenix_valkey_limiter_password }}"
+    - name: health
+      password: "{{ firephenix_valkey_health_password }}"
+  no_log: true
+
+- name: Deploy FirePhenix Valkey ACL file
+  ansible.builtin.template:
+    src: valkey-users.acl.j2
+    dest: "{{ firephenix_stack_dir }}/valkey-users.acl"
+    owner: root
+    group: "1000"
+    mode: "0640"
+  no_log: true
+
 - name: Deploy FirePhenix docker-compose file
   ansible.builtin.template:
     src: docker-compose.yml.j2
@@ -43,6 +73,8 @@
   loop:
     - src: env-database.j2
       dest: .env.database
+    - src: env-valkey.j2
+      dest: .env.valkey
     - src: env-backend.j2
       dest: .env.backend
     - src: env-bot.j2

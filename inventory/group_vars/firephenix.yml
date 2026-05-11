@@ -25,7 +25,6 @@ firephenix_db_name: "firephenix"
 firephenix_db_user: "firephenix"
 firephenix_cors_origins:
   - "{{ firephenix_site_url }}"
-firephenix_limiter_storage_uri: "valkey://valkey:6379"
 
 firephenix_creation_start_stack: false
 firephenix_local_backup_archive: ""
