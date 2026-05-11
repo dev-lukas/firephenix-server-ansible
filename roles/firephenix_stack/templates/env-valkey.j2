@@ -1,0 +1,5 @@
+{% macro dotenv_quote(value) -%}
+'{{ (value | string) | replace("'", "\\'") }}'
+{%- endmacro %}
+VALKEY_HEALTH_USER={{ dotenv_quote(firephenix_valkey_health_user) }}
+VALKEY_HEALTH_PASSWORD={{ dotenv_quote(firephenix_valkey_health_password) }}

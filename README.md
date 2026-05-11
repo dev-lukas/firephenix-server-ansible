@@ -122,19 +122,27 @@ vault_firephenix_ts3_api_key: ""
 vault_firephenix_ts3_privilige_key: ""
 vault_firephenix_openrouter_api_key: ""
 vault_firephenix_vpnapi_api_key: ""
+vault_firephenix_valkey_backend_password: ""
+vault_firephenix_valkey_bot_password: ""
+vault_firephenix_valkey_ttt_password: ""
+vault_firephenix_valkey_limiter_password: ""
+vault_firephenix_valkey_health_password: ""
 ```
 
 `vault_firephenix_ts3_privilige_key` intentionally matches the current backend `.env.example` spelling.
+The Valkey ACL passwords must be unique, at least 32 characters, and contain no whitespace.
 
 ## Security Defaults
 
 The Docker stack writes separate service environment files under `firephenix_stack_dir`:
 
 - `.env.database` for MariaDB root and app database credentials
+- `.env.valkey` for the Valkey healthcheck user
 - `.env.backend` for backend-only app credentials and backend API keys
 - `.env.bot` for bot, Discord, and TeamSpeak credentials
+- `.env.ttt` for the TTT manager credentials
 
-The backend also receives `CORS_ORIGINS` and `LIMITER_STORAGE_URI` from `firephenix_cors_origins` and `firephenix_limiter_storage_uri`. The default limiter URI is `valkey://valkey:6379`, which targets the Compose service name from inside the backend container.
+Valkey uses an ACL file generated at `valkey-users.acl`. The default user is disabled, and each service receives only its own ACL user: backend command-bus access, bot Discord/TeamSpeak command handling, TTT `gameserver:ttt:*`, limiter `firephenix:limiter:*`, and healthcheck `PING`.
 
 The legacy shared `.env` file is removed during deployment so app containers do not keep receiving the database root password or unrelated service tokens.
 
