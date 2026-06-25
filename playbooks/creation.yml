@@ -16,6 +16,7 @@
           - website
           - portfolio
           - ttt
+          - teamspeak
         firephenix_stack_start_services: false
     - role: nginx_edge
     - role: restore_backup
