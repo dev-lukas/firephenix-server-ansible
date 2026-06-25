@@ -65,6 +65,7 @@
           - website
           - portfolio
           - ttt
+          - teamspeak
         firephenix_stack_start_services: true
       tags:
         - firephenix_stack
