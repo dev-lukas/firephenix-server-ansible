@@ -102,6 +102,9 @@ services:
       VALKEY_HOST: valkey
       VALKEY_PORT: "6379"
       SITE_URL: {{ firephenix_site_url }}
+      # Query the TTT server over the shared docker network; the hairpin route
+      # via the public IP masquerades as the gateway IP and can get banned.
+      TTT_STATUS_HOST: ttt
       PYTHONDONTWRITEBYTECODE: "1"
     depends_on:
       mariadb:
@@ -163,7 +166,9 @@ services:
       valkey:
         condition: service_healthy
     ports:
-      - "{{ firephenix_ttt_port }}:27015/tcp"
+      # RCON (TCP) stays host-local: public exposure lets scanners trigger
+      # srcds' anti-RCON-hack ban against the docker gateway IP.
+      - "127.0.0.1:{{ firephenix_ttt_port }}:27015/tcp"
       - "{{ firephenix_ttt_port }}:27015/udp"
       - "{{ firephenix_ttt_client_port }}:27005/udp"
       - "{{ firephenix_ttt_sourcetv_port }}:27020/udp"
