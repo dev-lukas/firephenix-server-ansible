@@ -69,11 +69,12 @@ services:
       - no-new-privileges:true
     environment:
       TS3SERVER_LICENSE: accept
-      TS3SERVER_QUERY_PROTOCOLS: raw
+      # SSH-only ServerQuery: the bot speaks SSH (atsq); raw/telnet is retired
+      TS3SERVER_QUERY_PROTOCOLS: ssh
     ports:
       - "{{ firephenix_teamspeak_voice_port }}:9987/udp"
       - "{{ firephenix_teamspeak_file_port }}:30033"
-      - "127.0.0.1:{{ firephenix_ts3_port }}:10011"
+      - "127.0.0.1:{{ firephenix_ts3_port }}:10022"
     volumes:
       - "{{ firephenix_teamspeak_data_dir }}:/var/ts3server"
     networks:
@@ -82,7 +83,9 @@ services:
         aliases:
           - "{{ firephenix_ts3_internal_alias }}"
     healthcheck:
-      test: ["CMD-SHELL", "echo quit | nc localhost 10011 | grep -q TS3"]
+      # The embedded libssh server only sends its banner after the client
+      # identifies, hence the printf (verified against teamspeak:3.13)
+      test: ["CMD-SHELL", "printf 'SSH-2.0-healthcheck\\r\\n' | nc localhost 10022 | grep -q SSH"]
       interval: 15s
       timeout: 5s
       retries: 5
