@@ -58,6 +58,10 @@ firephenix_ttt_css_work_dir: "{{ firephenix_stack_dir }}/tmp/ttt-css-content"
 firephenix_ttt_css_install_timeout_seconds: 3600
 firephenix_ttt_update_check_minutes: 60
 firephenix_docker_internal_subnet: "172.30.0.0/24"
+# ULA subnet so published ports DNAT inbound IPv6 straight into containers;
+# without it, IPv6 clients arrive via docker-proxy and appear as the edge
+# gateway IP (172.19.0.1) to TeamSpeak/srcds.
+firephenix_docker_edge_ipv6_subnet: "fd42:c0de:9987::/64"
 firephenix_teamspeak_query_allowlist:
   - "127.0.0.1/32"
   - "::1/128"

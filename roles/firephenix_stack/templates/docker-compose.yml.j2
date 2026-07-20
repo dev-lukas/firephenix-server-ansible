@@ -201,6 +201,10 @@ services:
 
 networks:
   edge:
+    enable_ipv6: true
+    ipam:
+      config:
+        - subnet: {{ firephenix_docker_edge_ipv6_subnet }}
   internal:
     internal: true
     ipam:
