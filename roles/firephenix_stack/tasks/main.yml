@@ -194,6 +194,36 @@
     - never
     - ttt_css_content
 
+- name: Ensure FirePhenix scripts directory exists
+  ansible.builtin.file:
+    path: "{{ firephenix_ttt_nightly_restart_script | dirname }}"
+    state: directory
+    mode: "0755"
+  when: firephenix_ttt_nightly_restart_enabled | bool
+
+- name: Deploy TTT nightly restart script
+  ansible.builtin.template:
+    src: ttt-nightly-restart.sh.j2
+    dest: "{{ firephenix_ttt_nightly_restart_script }}"
+    mode: "0755"
+  when: firephenix_ttt_nightly_restart_enabled | bool
+
+- name: Remove TTT nightly restart script
+  ansible.builtin.file:
+    path: "{{ firephenix_ttt_nightly_restart_script }}"
+    state: absent
+  when: not firephenix_ttt_nightly_restart_enabled | bool
+
+- name: Configure TTT nightly restart cron
+  ansible.builtin.cron:
+    name: "FirePhenix TTT nightly restart"
+    cron_file: firephenix-ttt-nightly-restart
+    user: root
+    minute: "{{ firephenix_ttt_nightly_restart_minute }}"
+    hour: "{{ firephenix_ttt_nightly_restart_hour }}"
+    job: "{{ firephenix_ttt_nightly_restart_script }}"
+    state: "{{ 'present' if firephenix_ttt_nightly_restart_enabled | bool else 'absent' }}"
+
 - name: Remove legacy shared environment file
   ansible.builtin.file:
     path: "{{ firephenix_stack_dir }}/.env"
