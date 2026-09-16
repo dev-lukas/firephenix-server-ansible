@@ -1,9 +1,6 @@
 #!/bin/bash
 # {{ ansible_managed | default('Managed by Ansible') }}
-# Nightly restart of the TTT srcds process so it re-checks the workshop
-# collection and downloads updated addons. Without this, a long-running
-# server keeps serving stale cached .gma content and drops clients with
-# "Client's map [...] differs from the server's" after a workshop update.
+# Nightly TTT srcds restart so it re-pulls workshop addons; stale cached .gma drops clients ("map differs").
 set -euo pipefail
 
 STACK_DIR="{{ firephenix_stack_dir }}"
@@ -24,9 +21,7 @@ if ! compose ps --services --status running | grep -qx "${SERVICE}"; then
   exit 0
 fi
 
-# Best-effort player check (same gamedig the container's safe_update uses).
-# Only a confirmed non-zero player count skips the restart; an inconclusive
-# query must not block the maintenance window.
+# Best-effort gamedig check; only a confirmed non-zero player count skips the restart.
 players="$(compose exec -T "${SERVICE}" gosu linuxgsm bash -c '
   cd /app || exit 1
   command -v jq >/dev/null 2>&1 || exit 1

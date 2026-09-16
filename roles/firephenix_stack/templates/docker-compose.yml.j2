@@ -83,8 +83,7 @@ services:
         aliases:
           - "{{ firephenix_ts3_internal_alias }}"
     healthcheck:
-      # The embedded libssh server only sends its banner after the client
-      # identifies, hence the printf (verified against teamspeak:3.13)
+      # The embedded libssh only sends its banner after the client identifies, hence the printf.
       test: ["CMD-SHELL", "printf 'SSH-2.0-healthcheck\\r\\n' | nc localhost 10022 | grep -q SSH"]
       interval: 15s
       timeout: 5s
@@ -105,8 +104,7 @@ services:
       VALKEY_HOST: valkey
       VALKEY_PORT: "6379"
       SITE_URL: {{ firephenix_site_url }}
-      # Query the TTT server over the shared docker network; the hairpin route
-      # via the public IP masquerades as the gateway IP and can get banned.
+      # Query TTT over the shared docker network; the public-IP hairpin looks like the gateway IP and gets banned.
       TTT_STATUS_HOST: ttt
       PYTHONDONTWRITEBYTECODE: "1"
     depends_on:
@@ -169,8 +167,7 @@ services:
       valkey:
         condition: service_healthy
     ports:
-      # RCON (TCP) stays host-local: public exposure lets scanners trigger
-      # srcds' anti-RCON-hack ban against the docker gateway IP.
+      # RCON (TCP) stays host-local: scanners trip srcds' anti-RCON-hack ban on the docker gateway IP.
       - "127.0.0.1:{{ firephenix_ttt_port }}:27015/tcp"
       - "{{ firephenix_ttt_port }}:27015/udp"
       - "{{ firephenix_ttt_client_port }}:27005/udp"

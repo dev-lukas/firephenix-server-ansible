@@ -5,8 +5,7 @@
   vars_files:
     - ../inventory/group_vars/vault.yml
   vars:
-    # Maintenance is safe for a live server and must never restore or reset
-    # persistent data. Explicit extra-vars still win and are rejected below.
+    # Live-safe defaults; restore vars passed as extra-vars are rejected below.
     firephenix_local_backup_archive: ""
     firephenix_restore_database: false
     firephenix_restore_database_reset: false
