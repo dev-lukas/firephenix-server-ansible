@@ -1,0 +1,62 @@
+#!/bin/bash
+# {{ ansible_managed | default('Managed by Ansible') }}
+# Nightly restart of the TTT srcds process so it re-checks the workshop
+# collection and downloads updated addons. Without this, a long-running
+# server keeps serving stale cached .gma content and drops clients with
+# "Client's map [...] differs from the server's" after a workshop update.
+set -euo pipefail
+
+STACK_DIR="{{ firephenix_stack_dir }}"
+SERVICE="ttt"
+QUERY_PORT="{{ firephenix_ttt_port }}"
+LOG_TAG="firephenix-ttt-nightly-restart"
+
+log() {
+  logger -t "${LOG_TAG}" -- "$*"
+}
+
+compose() {
+  docker compose --project-directory "${STACK_DIR}" "$@"
+}
+
+if ! compose ps --services --status running | grep -qx "${SERVICE}"; then
+  log "skipping restart: service ${SERVICE} is not running"
+  exit 0
+fi
+
+# Best-effort player check (same gamedig the container's safe_update uses).
+# Only a confirmed non-zero player count skips the restart; an inconclusive
+# query must not block the maintenance window.
+players="$(compose exec -T "${SERVICE}" gosu linuxgsm bash -c '
+  cd /app || exit 1
+  command -v jq >/dev/null 2>&1 || exit 1
+  gamedig="lgsm/node_modules/gamedig/bin/gamedig.js"
+  [ -f "${gamedig}" ] || exit 1
+  for host in $(hostname -i); do
+    raw="$(node "${gamedig}" --type protocol-valve "${host}:'"${QUERY_PORT}"'" 2>/dev/null)" || continue
+    [ -z "$(jq -r ".error // empty" <<< "${raw}")" ] || continue
+    count="$(jq -r ".players | length" <<< "${raw}")" || continue
+    case "${count}" in *[!0-9]*|"") continue ;; esac
+    printf "%s\n" "${count}"
+    exit 0
+  done
+  exit 1
+' 2>/dev/null)" || players=""
+
+if [[ "${players}" =~ ^[0-9]+$ ]] && [ "${players}" -gt 0 ]; then
+  log "skipping restart: ${players} player(s) online"
+  exit 0
+fi
+
+if [ -z "${players}" ]; then
+  log "player count could not be confirmed; restarting anyway"
+else
+  log "server is empty; restarting"
+fi
+
+if compose exec -T "${SERVICE}" gosu linuxgsm bash -c 'cd /app && ./gmodserver restart' >/dev/null 2>&1; then
+  log "restart completed"
+else
+  log "restart failed with exit code $?"
+  exit 1
+fi

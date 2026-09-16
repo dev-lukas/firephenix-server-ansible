@@ -57,6 +57,13 @@ firephenix_ttt_css_image: "ghcr.io/gameservermanagers/gameserver:css"
 firephenix_ttt_css_work_dir: "{{ firephenix_stack_dir }}/tmp/ttt-css-content"
 firephenix_ttt_css_install_timeout_seconds: 3600
 firephenix_ttt_update_check_minutes: 60
+# Nightly srcds restart so the server picks up updated workshop addons
+# (a long-running srcds keeps serving its cached .gma and drops clients
+# with "Client's map differs from the server's" once the addon updates).
+firephenix_ttt_nightly_restart_enabled: true
+firephenix_ttt_nightly_restart_minute: "0"
+firephenix_ttt_nightly_restart_hour: "4"
+firephenix_ttt_nightly_restart_script: "{{ firephenix_stack_dir }}/scripts/ttt-nightly-restart.sh"
 firephenix_docker_internal_subnet: "172.30.0.0/24"
 # ULA subnet so published ports DNAT inbound IPv6 straight into containers;
 # without it, IPv6 clients arrive via docker-proxy and appear as the edge
