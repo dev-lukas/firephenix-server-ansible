@@ -71,6 +71,8 @@ services:
       TS3SERVER_LICENSE: accept
       # SSH-only ServerQuery: the bot speaks SSH (atsq); raw/telnet is retired
       TS3SERVER_QUERY_PROTOCOLS: ssh
+    env_file:
+      - .env.teamspeak
     ports:
       - "{{ firephenix_teamspeak_voice_port }}:9987/udp"
       - "{{ firephenix_teamspeak_file_port }}:30033"

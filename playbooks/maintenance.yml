@@ -2,8 +2,6 @@
 - name: Perform routine maintenance on the new FirePhenix server
   hosts: firephenix
   gather_facts: false
-  vars_files:
-    - ../inventory/group_vars/vault.yml
   vars:
     # Live-safe defaults; restore vars passed as extra-vars are rejected below.
     firephenix_local_backup_archive: ""
@@ -11,6 +9,9 @@
     firephenix_restore_database_reset: false
     firephenix_restore_teamspeak: false
   pre_tasks:
+    - name: Verify Proton Pass session and SSH agent on the controller
+      ansible.builtin.include_tasks: tasks/secrets_preflight.yml
+      tags: always
     - name: Refuse restore inputs in live maintenance
       ansible.builtin.assert:
         that:

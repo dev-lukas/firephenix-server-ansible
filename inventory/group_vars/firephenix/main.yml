@@ -26,12 +26,12 @@ firephenix_db_user: "firephenix"
 firephenix_cors_origins:
   - "{{ firephenix_site_url }}"
 
-firephenix_creation_start_stack: true
+firephenix_creation_start_stack: false
 firephenix_local_backup_archive: ""
 firephenix_remote_backup_dir: "/opt/firephenix/restore"
-firephenix_restore_database: true
-firephenix_restore_database_reset: true
-firephenix_restore_teamspeak: true
+firephenix_restore_database: false
+firephenix_restore_database_reset: false
+firephenix_restore_teamspeak: false
 
 firephenix_ts3_internal_alias: "teamspeak-internal"
 firephenix_ts3_host: "{{ firephenix_ts3_internal_alias }}"
@@ -43,10 +43,10 @@ firephenix_ttt_port: 27015
 firephenix_ttt_data_dir: "{{ firephenix_stack_dir }}/data/ttt"
 firephenix_docker_internal_subnet: "172.30.0.0/24"
 
-admin_steam_ids: []
-ttt_gslt: ""
-ttt_rcon_password: ""
-ttt_server_password: ""
+admin_steam_ids: "{{ secret_admin_steam_ids | default([]) }}"
+ttt_gslt: "{{ secret_ttt_gslt | default('') }}"
+ttt_rcon_password: "{{ secret_ttt_rcon_password | default('') }}"
+ttt_server_password: "{{ secret_ttt_server_password | default('') }}"
 
 nginx_edge_ssl_mode: "letsencrypt"
 nginx_edge_obtain_certificates: true

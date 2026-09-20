@@ -1,0 +1,6 @@
+{% macro dotenv_quote(value) -%}
+'{{ (value | string) | replace("'", "\\'") }}'
+{%- endmacro %}
+# Applied by the image entrypoint on every start (serveradmin_password=), so the
+# ServerQuery admin password follows Proton Pass.
+TS3SERVER_SERVERADMIN_PASSWORD={{ dotenv_quote(firephenix_ts3_password) }}

@@ -39,11 +39,12 @@ The TeamSpeak backup and restore format has been verified on the dev server with
 firephenix-server-ansible/
 ├── ansible.cfg
 ├── inventory/
-│   ├── hosts.yml.example
+│   ├── hosts.yml
 │   └── group_vars/
-│       ├── all.yml.example
-│       ├── firephenix.yml.example
-│       └── vault.yml.example
+│       ├── all.yml
+│       └── firephenix/
+│           ├── main.yml
+│           └── secrets.yml
 ├── playbooks/
 │   ├── creation.yml
 │   └── maintenance.yml
@@ -88,49 +89,39 @@ pip install -r requirements.txt
 ansible-galaxy collection install -r requirements.yml
 ```
 
-Create local inventory files from the public-safe examples:
+## Secrets
 
-```bash
-cp inventory/hosts.yml.example inventory/hosts.yml
-cp inventory/group_vars/all.yml.example inventory/group_vars/all.yml
-cp inventory/group_vars/firephenix.yml.example inventory/group_vars/firephenix.yml
-```
+Nothing secret is stored in this repository. Every credential is fetched at
+run time from Proton Pass through [pass-cli](https://protonpass.github.io/pass-cli/)
+and the `proton_pass` lookup (vendored in `plugins/lookup/` from
+community.general main until a release works with pass-cli 2.3). The lookups
+are listed in `inventory/group_vars/firephenix/secrets.yml`. SSH keys come
+from the Proton Pass SSH agent, so no private key sits on the controller.
 
-Create your vault file from the example:
+The controller setup (pass-cli, `pass-cli login`, the agent service) is the
+same as in homeserver-ansible; see its README. Every playbook starts with
+`playbooks/tasks/secrets_preflight.yml`, which fails early if the session or
+the agent socket is missing.
 
-```bash
-cp inventory/group_vars/vault.yml.example inventory/group_vars/vault.yml
-ansible-vault encrypt inventory/group_vars/vault.yml
-```
+### Layout in Proton Pass
 
-The local inventory files, vault file, backup archives, SQL dumps, and generated virtualenv are intentionally ignored by git.
+| Vault        | Item                      | Fields                                              |
+|--------------|---------------------------|-----------------------------------------------------|
+| `homeserver` | `registry` (Login)        | `password` (shared with the homeserver registry)    |
+| `firephenix` | `mariadb`                 | `root_password`, `password`                         |
+| `firephenix` | `backend`                 | `secret_key`, `openrouter_api_key`, `vpnapi_api_key`|
+| `firephenix` | `discord`                 | `bot_token`                                         |
+| `firephenix` | `teamspeak`               | `query_password` (serveradmin, enforced on start)   |
+| `firephenix` | `valkey`                  | `backend`, `bot`, `ttt`, `limiter`, `health`        |
+| `firephenix` | `ttt`                     | `gslt`, `rcon_password`, `server_password`          |
+| `firephenix` | `admins`                  | `steam_ids` (comma-separated)                       |
+| `ssh-keys`   | `firephenix-github-deploy` (SSH Key) | public half authorizes the CI deploy user; the private half is the `VPS_SSH_KEY` secret of the app repos |
+| `ssh-keys`   | `firephenix-dev-vm` (SSH Key)        | the key Ansible connects with                        |
 
-The playbooks explicitly load `inventory/group_vars/vault.yml` via `vars_files`. Keep the file at that path unless you also update the playbooks.
-
-## Vault Variables
-
-`inventory/group_vars/vault.yml` should contain at least:
-
-```yaml
-vault_firephenix_registry_password: ""
-vault_firephenix_db_root_password: ""
-vault_firephenix_db_password: ""
-vault_firephenix_secret_key: ""
-vault_firephenix_discord_token: ""
-vault_firephenix_ts3_password: ""
-vault_firephenix_ts3_api_key: ""
-vault_firephenix_ts3_privilige_key: ""
-vault_firephenix_openrouter_api_key: ""
-vault_firephenix_vpnapi_api_key: ""
-vault_firephenix_valkey_backend_password: ""
-vault_firephenix_valkey_bot_password: ""
-vault_firephenix_valkey_ttt_password: ""
-vault_firephenix_valkey_limiter_password: ""
-vault_firephenix_valkey_health_password: ""
-```
-
-`vault_firephenix_ts3_privilige_key` intentionally matches the current backend `.env.example` spelling.
-The Valkey ACL passwords must be unique, at least 32 characters, and contain no whitespace.
+Secrets go in as *hidden* custom fields whose names match the table. The
+Valkey ACL passwords must be unique, at least 32 characters, and contain no
+whitespace. Rotating the TeamSpeak query password is a new value in Proton
+Pass plus a maintenance run; the container restarts once with it.
 
 ## Security Defaults
 
@@ -138,6 +129,7 @@ The Docker stack writes separate service environment files under `firephenix_sta
 
 - `.env.database` for MariaDB root and app database credentials
 - `.env.valkey` for the Valkey healthcheck user
+- `.env.teamspeak` for the ServerQuery serveradmin password
 - `.env.backend` for backend-only app credentials and backend API keys
 - `.env.bot` for bot, Discord, and TeamSpeak credentials
 - `.env.ttt` for the TTT manager credentials
@@ -159,14 +151,13 @@ Hardens and provisions the reinstalled Debian 13 server, installs Docker, config
 Do not use this playbook for routine live updates on an already deployed server. It includes restore roles and can reset MariaDB when restore variables are enabled.
 
 ```bash
-ansible-playbook playbooks/creation.yml --ask-vault-pass
+ansible-playbook playbooks/creation.yml
 ```
 
 This playbook expects a local backup archive path via inventory or `-e`, for example:
 
 ```bash
 ansible-playbook playbooks/creation.yml \
-  --ask-vault-pass \
   -e firephenix_local_backup_archive=/path/to/firephenix-backup-20260421T120000Z.tar.gz
 ```
 
@@ -174,7 +165,6 @@ TLS starts with a self-signed bootstrap certificate so nginx can validate and st
 
 ```bash
 ansible-playbook playbooks/creation.yml \
-  --ask-vault-pass \
   -e nginx_edge_ssl_mode=letsencrypt \
   -e nginx_edge_obtain_certificates=true
 ```
@@ -186,13 +176,13 @@ Updates the live FirePhenix server without running backup restore roles. It upgr
 Existing Docker volumes and the TeamSpeak bind mount are preserved. The playbook rejects backup and restore variables; use `creation.yml` only for an intentional rebuild/restore.
 
 ```bash
-ansible-playbook playbooks/maintenance.yml --ask-vault-pass
+ansible-playbook playbooks/maintenance.yml
 ```
 
 For an Ansible-driven deploy without package maintenance, run only the live deploy tags:
 
 ```bash
-ansible-playbook playbooks/maintenance.yml --ask-vault-pass --tags docker_egress,firephenix_stack,nginx_edge
+ansible-playbook playbooks/maintenance.yml --tags docker_egress,firephenix_stack,nginx_edge
 ```
 
 ### GitHub Actions Deploy User
@@ -214,7 +204,7 @@ firephenix_ci_deploy_authorized_keys:
 Apply only the deploy-user hardening to an existing server:
 
 ```bash
-ansible-playbook playbooks/maintenance.yml --ask-vault-pass --tags ci_deploy_user
+ansible-playbook playbooks/maintenance.yml --tags ci_deploy_user
 ```
 
 Use these GitHub Secrets:

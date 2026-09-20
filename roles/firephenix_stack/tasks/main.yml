@@ -58,6 +58,16 @@
     group: "1000"
     mode: "0640"
   no_log: true
+  register: firephenix_valkey_acl
+
+- name: Restart Valkey so a changed ACL file takes effect
+  ansible.builtin.command:
+    cmd: docker compose restart valkey
+    chdir: "{{ firephenix_stack_dir }}"
+  when:
+    - firephenix_valkey_acl.changed
+    - firephenix_stack_start_services | bool
+  changed_when: true
 
 - name: Deploy FirePhenix docker-compose file
   ansible.builtin.template:
@@ -75,6 +85,8 @@
       dest: .env.database
     - src: env-valkey.j2
       dest: .env.valkey
+    - src: env-teamspeak.j2
+      dest: .env.teamspeak
     - src: env-backend.j2
       dest: .env.backend
     - src: env-bot.j2
@@ -89,7 +101,7 @@
       - ttt_gslt | length > 0
       - ttt_rcon_password | length > 0
     fail_msg: >-
-      TTT requires vault_ttt_gslt and vault_ttt_rcon_password to be set.
+      TTT requires secret_ttt_gslt and secret_ttt_rcon_password to be set.
       ttt_server_password is optional and may be empty for a public server.
   no_log: true
 
