@@ -1,8 +1,10 @@
 ---
 - name: Rebuild and provision the FirePhenix server
   hosts: firephenix
-  vars_files:
-    - ../inventory/group_vars/vault.yml
+  pre_tasks:
+    - name: Verify Proton Pass session and SSH agent on the controller
+      ansible.builtin.include_tasks: tasks/secrets_preflight.yml
+      tags: always
   roles:
     - role: base_server
     - role: auto_updates

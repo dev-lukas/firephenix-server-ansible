@@ -21,6 +21,8 @@ firephenix_registry_username: "registry"
 firephenix_registry_public_ip_override: ""
 firephenix_registry_allow_private_dns: false
 
-firephenix_ci_deploy_authorized_keys: []
+# Public half of the GitHub Actions deploy key (ssh-keys vault in Proton Pass).
+firephenix_ci_deploy_authorized_keys:
+  - "{{ secret_firephenix_github_deploy_public_key }}"
 
 nginx_edge_email: "admin@firephenix.de"

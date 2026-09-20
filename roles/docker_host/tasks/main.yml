@@ -115,7 +115,7 @@
       - docker_host_registry_password | length > 0
     fail_msg: >-
       Registry credentials are required for {{ docker_host_registry_url }}.
-      Set firephenix_registry_username and vault_firephenix_registry_password before deployment.
+      Set firephenix_registry_username and secret_firephenix_registry_password before deployment.
 
 - name: Log into private registry
   community.docker.docker_login:
