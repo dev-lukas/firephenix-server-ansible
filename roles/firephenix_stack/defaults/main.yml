@@ -18,8 +18,6 @@ firephenix_db_password: "{{ secret_firephenix_db_password | default('change-me-d
 firephenix_secret_key: "{{ secret_firephenix_secret_key | default('change-me-secret-key') }}"
 firephenix_discord_token: "{{ secret_firephenix_discord_token | default('') }}"
 firephenix_ts3_password: "{{ secret_firephenix_ts3_password | default('') }}"
-firephenix_ts3_api_key: "{{ secret_firephenix_ts3_api_key | default('') }}"
-firephenix_ts3_privilige_key: "{{ secret_firephenix_ts3_privilige_key | default('') }}"
 firephenix_openrouter_api_key: "{{ secret_firephenix_openrouter_api_key | default('') }}"
 firephenix_vpnapi_api_key: "{{ secret_firephenix_vpnapi_api_key | default('') }}"
 firephenix_valkey_backend_password: "{{ secret_firephenix_valkey_backend_password | default('') }}"

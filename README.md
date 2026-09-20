@@ -111,17 +111,17 @@ the agent socket is missing.
 | `firephenix` | `mariadb`                 | `root_password`, `password`                         |
 | `firephenix` | `backend`                 | `secret_key`, `openrouter_api_key`, `vpnapi_api_key`|
 | `firephenix` | `discord`                 | `bot_token`                                         |
-| `firephenix` | `teamspeak`               | `query_password`, `api_key`, `privilege_key`        |
+| `firephenix` | `teamspeak`               | `query_password` (serveradmin, enforced on start)   |
 | `firephenix` | `valkey`                  | `backend`, `bot`, `ttt`, `limiter`, `health`        |
 | `firephenix` | `ttt`                     | `gslt`, `rcon_password`, `server_password`          |
 | `firephenix` | `admins`                  | `steam_ids` (comma-separated)                       |
 | `ssh-keys`   | `firephenix-github-deploy` (SSH Key) | public half authorizes the CI deploy user; the private half is the `VPS_SSH_KEY` secret of the app repos |
 | `ssh-keys`   | `firephenix-dev-vm` (SSH Key)        | the key Ansible connects with                        |
 
-Secrets go in as *hidden* custom fields whose names match the table.
-`secret_firephenix_ts3_privilige_key` intentionally keeps the backend
-`.env.example` spelling. The Valkey ACL passwords must be unique, at least 32
-characters, and contain no whitespace.
+Secrets go in as *hidden* custom fields whose names match the table. The
+Valkey ACL passwords must be unique, at least 32 characters, and contain no
+whitespace. Rotating the TeamSpeak query password is a new value in Proton
+Pass plus a maintenance run; the container restarts once with it.
 
 ## Security Defaults
 
@@ -129,6 +129,7 @@ The Docker stack writes separate service environment files under `firephenix_sta
 
 - `.env.database` for MariaDB root and app database credentials
 - `.env.valkey` for the Valkey healthcheck user
+- `.env.teamspeak` for the ServerQuery serveradmin password
 - `.env.backend` for backend-only app credentials and backend API keys
 - `.env.bot` for bot, Discord, and TeamSpeak credentials
 - `.env.ttt` for the TTT manager credentials

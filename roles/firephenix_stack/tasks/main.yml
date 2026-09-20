@@ -85,6 +85,8 @@
       dest: .env.database
     - src: env-valkey.j2
       dest: .env.valkey
+    - src: env-teamspeak.j2
+      dest: .env.teamspeak
     - src: env-backend.j2
       dest: .env.backend
     - src: env-bot.j2
