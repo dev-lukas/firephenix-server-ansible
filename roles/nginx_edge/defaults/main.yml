@@ -17,4 +17,6 @@ nginx_edge_rate_limit_site: "30r/s"
 nginx_edge_rate_limit_site_burst: 60
 nginx_edge_rate_limit_api: "10r/s"
 nginx_edge_rate_limit_api_burst: 30
+nginx_edge_rate_limit_assets: "100r/s"
+nginx_edge_rate_limit_assets_burst: 200
 nginx_edge_connection_limit_per_ip: 20

@@ -140,7 +140,7 @@ The legacy shared `.env` file is removed during deployment so app containers do 
 
 Stateless containers run with `no-new-privileges`, read-only root filesystems, tmpfs scratch space, process limits, and dropped Linux capabilities where practical. The backend and bot default to user `1000:1000`; override `firephenix_backend_container_user` or `firephenix_bot_container_user` if your images require a different runtime UID. The bot writes its legacy PID file to `/tmp/bot_runner.pid`, so it stays compatible with read-only application filesystems.
 
-Nginx enables request and connection limits by default through `nginx_edge_rate_limit_*` and `nginx_edge_connection_limit_per_ip`. HSTS is enabled automatically when `nginx_edge_ssl_mode` is `letsencrypt`; leave `nginx_edge_hsts_include_subdomains` and `nginx_edge_hsts_preload` disabled until every subdomain is permanently HTTPS-ready.
+Nginx enables request and connection limits by default through `nginx_edge_rate_limit_*` and `nginx_edge_connection_limit_per_ip`; the website's hashed `/assets/` are only rate-limited (`nginx_edge_rate_limit_assets*`), since HTTP/2 counts every parallel image request against the connection limit. HSTS is enabled automatically when `nginx_edge_ssl_mode` is `letsencrypt`; leave `nginx_edge_hsts_include_subdomains` and `nginx_edge_hsts_preload` disabled until every subdomain is permanently HTTPS-ready.
 
 ## Playbooks
 

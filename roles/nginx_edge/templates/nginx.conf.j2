@@ -28,6 +28,7 @@ http {
 
     limit_req_zone $binary_remote_addr zone=firephenix_site:10m rate={{ nginx_edge_rate_limit_site }};
     limit_req_zone $binary_remote_addr zone=firephenix_api:10m rate={{ nginx_edge_rate_limit_api }};
+    limit_req_zone $binary_remote_addr zone=firephenix_assets:10m rate={{ nginx_edge_rate_limit_assets }};
     limit_conn_zone $binary_remote_addr zone=firephenix_per_ip:10m;
     limit_req_status 429;
     limit_conn_status 429;

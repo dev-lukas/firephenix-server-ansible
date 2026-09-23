@@ -51,6 +51,14 @@ server {
         proxy_pass http://firephenix_backend;
     }
 
+    # Hashed Vite assets: HTTP/2 counts each stream against limit_conn, and the
+    # profile page loads ~35 icons at once, so only rate-limit these.
+    location /assets/ {
+        limit_req zone=firephenix_assets burst={{ nginx_edge_rate_limit_assets_burst }} nodelay;
+        include /etc/nginx/snippets/proxy-params.conf;
+        proxy_pass http://firephenix_website;
+    }
+
     location / {
         limit_req zone=firephenix_site burst={{ nginx_edge_rate_limit_site_burst }} nodelay;
         limit_conn firephenix_per_ip {{ nginx_edge_connection_limit_per_ip }};
