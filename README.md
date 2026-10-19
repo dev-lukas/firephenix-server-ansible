@@ -266,3 +266,7 @@ Typical flow:
 - CrowdSec is configured for Nginx and SSH log ingestion, with the firewall bouncer blocking bad actors at the host level.
 - The Docker stack itself is not internet-facing; only host Nginx is.
 - I kept Nginx instead of Traefik because the CrowdSec integration is simpler and already proven in your other Ansible code.
+
+## License
+
+[MIT](LICENSE)
