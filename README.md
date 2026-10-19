@@ -105,7 +105,11 @@ the agent socket is missing.
 
 ### Layout in Proton Pass
 
-| Vault        | Item                      | Fields                                              |
+All items live in the `Server` vault, sorted into folders. pass-cli looks
+items up by exact (case-sensitive) title across the whole vault and cannot
+address folders, so the titles used below must stay unique within `Server`.
+
+| Folder       | Item                      | Fields                                              |
 |--------------|---------------------------|-----------------------------------------------------|
 | `homeserver` | `registry` (Login)        | `password` (shared with the homeserver registry)    |
 | `firephenix` | `mariadb`                 | `root_password`, `password`                         |
