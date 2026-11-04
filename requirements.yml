@@ -2,5 +2,6 @@
 collections:
   - ansible.posix
   - community.docker
-  - community.general
+  - name: community.general
+    version: ">=14.0.0"
 
