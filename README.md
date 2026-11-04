@@ -93,8 +93,8 @@ ansible-galaxy collection install -r requirements.yml
 
 Nothing secret is stored in this repository. Every credential is fetched at
 run time from Proton Pass through [pass-cli](https://protonpass.github.io/pass-cli/)
-and the `proton_pass` lookup (vendored in `plugins/lookup/` from
-community.general main until a release works with pass-cli 2.3). The lookups
+and the `community.general.proton_pass` lookup (community.general 14.0.0 or
+later, which works with pass-cli 2.3+ and reads custom item fields). The lookups
 are listed in `inventory/group_vars/firephenix/secrets.yml`. SSH keys come
 from the Proton Pass SSH agent, so no private key sits on the controller.
 
